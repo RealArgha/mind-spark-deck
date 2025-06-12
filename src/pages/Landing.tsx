@@ -3,65 +3,50 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { BookOpen, Brain, Zap, Mic, Volume2, TrendingUp } from 'lucide-react';
+import { BookOpen, Brain, Zap } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 
 const Landing = () => {
   const features = [
     {
       icon: Brain,
-      title: "AI-Powered Generation",
-      description: "Automatically convert your notes into optimized flashcards using advanced AI"
+      title: "AI Generation",
+      description: "Convert notes into flashcards automatically"
     },
     {
       icon: Zap,
       title: "Spaced Repetition",
-      description: "Smart algorithm adapts to your learning pace for maximum retention"
-    },
-    {
-      icon: Mic,
-      title: "Voice Input",
-      description: "Record voice notes and convert them to flashcards instantly"
-    },
-    {
-      icon: Volume2,
-      title: "Text-to-Speech",
-      description: "Listen to your flashcards for auditory learning"
-    },
-    {
-      icon: TrendingUp,
-      title: "Progress Tracking",
-      description: "Monitor your learning progress with detailed analytics"
+      description: "Learn efficiently with smart scheduling"
     },
     {
       icon: BookOpen,
       title: "Multiple Formats",
-      description: "Support for PDFs, text input, and various content types"
+      description: "Support for PDFs and text input"
     }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-purple-50/20">
+    <div className="min-h-screen bg-background">
       <Navbar />
       
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 text-center">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-primary via-purple-600 to-blue-600 bg-clip-text text-transparent mb-6">
+      <section className="container mx-auto px-4 py-32 text-center">
+        <div className="max-w-2xl mx-auto">
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             Learn Faster with AI
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed">
-            Transform your study materials into intelligent flashcards and quizzes. 
-            NeuroDeck uses AI to help you learn more efficiently than ever before.
+          <p className="text-lg text-muted-foreground mb-8">
+            Transform your study materials into intelligent flashcards. 
+            Simple, efficient, effective.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/upload">
-              <Button size="lg" className="bg-gradient-to-r from-primary to-purple-600 text-lg px-8 py-3">
-                Start Learning Now
+              <Button size="lg" className="px-8">
+                Start Learning
               </Button>
             </Link>
             <Link to="/dashboard">
-              <Button variant="outline" size="lg" className="text-lg px-8 py-3">
+              <Button variant="outline" size="lg" className="px-8">
                 View Demo
               </Button>
             </Link>
@@ -69,47 +54,44 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Features Grid */}
+      {/* Features */}
       <section className="container mx-auto px-4 py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Powerful Features for Modern Learning
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Everything you need to supercharge your study sessions
-          </p>
-        </div>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <Card key={index} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-              <CardContent className="p-6">
-                <feature.icon className="h-12 w-12 text-primary mb-4 group-hover:scale-110 transition-transform" />
-                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">
+              Everything you need
+            </h2>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <Card key={index} className="border-0 shadow-none">
+                <CardContent className="p-6 text-center">
+                  <feature.icon className="h-8 w-8 text-foreground mb-4 mx-auto" />
+                  <h3 className="text-lg font-medium mb-2">{feature.title}</h3>
+                  <p className="text-muted-foreground text-sm">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA */}
       <section className="container mx-auto px-4 py-20">
-        <Card className="bg-gradient-to-r from-primary/10 to-purple-600/10 border-primary/20">
-          <CardContent className="p-12 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Ready to Transform Your Learning?
-            </h2>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join thousands of students who are already learning faster and more effectively with NeuroDeck.
-            </p>
-            <Link to="/upload">
-              <Button size="lg" className="bg-gradient-to-r from-primary to-purple-600 text-lg px-8 py-3">
-                Get Started Free
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4">
+            Ready to get started?
+          </h2>
+          <p className="text-muted-foreground mb-8">
+            Join students learning more effectively.
+          </p>
+          <Link to="/upload">
+            <Button size="lg" className="px-8">
+              Get Started
+            </Button>
+          </Link>
+        </div>
       </section>
     </div>
   );

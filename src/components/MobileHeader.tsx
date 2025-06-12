@@ -11,17 +11,17 @@ interface MobileHeaderProps {
 
 const MobileHeader = ({ title, showLogo = false, onMenuClick }: MobileHeaderProps) => {
   return (
-    <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
+    <header className="bg-background border-b border-border">
       <div className="flex items-center justify-between px-4 py-3 safe-area-inset-top">
         {showLogo ? (
           <div className="flex items-center space-x-2">
-            <BookOpen className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+            <BookOpen className="h-6 w-6 text-foreground" />
+            <span className="text-lg font-semibold text-foreground">
               NeuroDeck
             </span>
           </div>
         ) : (
-          <h1 className="text-lg font-semibold">{title}</h1>
+          <h1 className="text-lg font-medium">{title}</h1>
         )}
         
         {onMenuClick && (
