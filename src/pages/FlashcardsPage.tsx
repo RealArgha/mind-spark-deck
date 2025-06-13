@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Navbar from '@/components/Navbar';
+import MobileHeader from '@/components/MobileHeader';
 
 const FlashcardsPage = () => {
   const [isCompleted, setIsCompleted] = useState(false);
@@ -45,18 +45,18 @@ const FlashcardsPage = () => {
 
   if (isCompleted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-purple-50/20">
-        <Navbar />
-        <div className="container mx-auto px-4 py-20">
-          <Card className="max-w-2xl mx-auto text-center">
+      <div className="h-screen bg-gradient-to-br from-background to-purple-50/20 flex flex-col">
+        <MobileHeader title="Study Complete" showBack />
+        <div className="flex-1 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md text-center">
             <CardHeader>
               <div className="mx-auto w-16 h-16 bg-gradient-to-r from-primary to-purple-600 rounded-full flex items-center justify-center mb-4">
                 <Trophy className="h-8 w-8 text-white" />
               </div>
-              <CardTitle className="text-3xl">Study Session Complete!</CardTitle>
+              <CardTitle className="text-2xl">Study Session Complete!</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-lg text-muted-foreground mb-6">
+              <p className="text-muted-foreground mb-6">
                 Great job! You've reviewed all {sampleCards.length} flashcards in this deck.
               </p>
               <div className="space-y-3">
@@ -81,20 +81,9 @@ const FlashcardsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-purple-50/20">
-      <Navbar />
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <Link to="/dashboard">
-            <Button variant="ghost" className="mb-4">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </Link>
-          <h1 className="text-3xl font-bold mb-2">Biology Chapter 5</h1>
-          <p className="text-muted-foreground">Review your flashcards using spaced repetition</p>
-        </div>
-
+    <div className="h-screen bg-gradient-to-br from-background to-purple-50/20 flex flex-col overflow-hidden">
+      <MobileHeader title="Biology Chapter 5" showBack />
+      <div className="flex-1 overflow-hidden">
         <FlashcardViewer 
           cards={sampleCards}
           onComplete={() => setIsCompleted(true)}

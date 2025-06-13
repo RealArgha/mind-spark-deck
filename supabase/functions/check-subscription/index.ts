@@ -44,73 +44,111 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    
-    if (customers.data.length === 0) {
-      logStep("No customer found, updating unsubscribed state");
-      await supabaseClient.from("subscribers").upsert({
+    // Check for existing subscriber record
+    const { data: existingSubscriber } = await supabaseClient
+      .from("subscribers")
+      .select("*")
+      .eq("email", user.email)
+      .single();
+
+    const now = new Date();
+    let trialActive = false;
+    let trialEnd = null;
+
+    // If no subscriber record exists, create one with 7-day trial
+    if (!existingSubscriber) {
+      const trialEndDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+      
+      await supabaseClient.from("subscribers").insert({
         email: user.email,
         user_id: user.id,
         stripe_customer_id: null,
         subscribed: false,
         subscription_tier: null,
         subscription_end: null,
+        trial_active: true,
+        trial_end: trialEndDate.toISOString(),
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'email' });
-      return new Response(JSON.stringify({ subscribed: false }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
       });
+
+      trialActive = true;
+      trialEnd = trialEndDate.toISOString();
+      logStep("Created new subscriber with 7-day trial", { trialEnd });
+    } else {
+      // Check if trial is still active
+      if (existingSubscriber.trial_end) {
+        const trialEndDate = new Date(existingSubscriber.trial_end);
+        trialActive = trialEndDate > now;
+        trialEnd = existingSubscriber.trial_end;
+      }
+      logStep("Found existing subscriber", { trialActive, trialEnd });
     }
 
-    const customerId = customers.data[0].id;
-    logStep("Found Stripe customer", { customerId });
-
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: "active",
-      limit: 1,
-    });
-    const hasActiveSub = subscriptions.data.length > 0;
+    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    
+    let hasActiveSub = false;
     let subscriptionTier = null;
     let subscriptionEnd = null;
 
-    if (hasActiveSub) {
-      const subscription = subscriptions.data[0];
-      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-      logStep("Active subscription found", { subscriptionId: subscription.id, endDate: subscriptionEnd });
-      
-      const priceId = subscription.items.data[0].price.id;
-      const price = await stripe.prices.retrieve(priceId);
-      const amount = price.unit_amount || 0;
-      if (amount <= 999) {
-        subscriptionTier = "Basic";
-      } else if (amount <= 2999) {
-        subscriptionTier = "Premium";
-      } else {
-        subscriptionTier = "Pro";
+    if (customers.data.length > 0) {
+      const customerId = customers.data[0].id;
+      logStep("Found Stripe customer", { customerId });
+
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "active",
+        limit: 1,
+      });
+      hasActiveSub = subscriptions.data.length > 0;
+
+      if (hasActiveSub) {
+        const subscription = subscriptions.data[0];
+        subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        logStep("Active subscription found", { subscriptionId: subscription.id, endDate: subscriptionEnd });
+        
+        const priceId = subscription.items.data[0].price.id;
+        const price = await stripe.prices.retrieve(priceId);
+        const amount = price.unit_amount || 0;
+        if (amount <= 999) {
+          subscriptionTier = "Basic";
+        } else if (amount <= 2999) {
+          subscriptionTier = "Premium";
+        } else {
+          subscriptionTier = "Pro";
+        }
+        logStep("Determined subscription tier", { priceId, amount, subscriptionTier });
+
+        // If user has active subscription, deactivate trial
+        if (trialActive) {
+          await supabaseClient
+            .from("subscribers")
+            .update({ trial_active: false })
+            .eq("email", user.email);
+          trialActive = false;
+        }
       }
-      logStep("Determined subscription tier", { priceId, amount, subscriptionTier });
-    } else {
-      logStep("No active subscription found");
+
+      await supabaseClient.from("subscribers").upsert({
+        email: user.email,
+        user_id: user.id,
+        stripe_customer_id: customerId,
+        subscribed: hasActiveSub,
+        subscription_tier: subscriptionTier,
+        subscription_end: subscriptionEnd,
+        trial_active: trialActive,
+        trial_end: trialEnd,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'email' });
     }
 
-    await supabaseClient.from("subscribers").upsert({
-      email: user.email,
-      user_id: user.id,
-      stripe_customer_id: customerId,
-      subscribed: hasActiveSub,
-      subscription_tier: subscriptionTier,
-      subscription_end: subscriptionEnd,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'email' });
-
-    logStep("Updated database with subscription info", { subscribed: hasActiveSub, subscriptionTier });
+    logStep("Updated database with subscription info", { subscribed: hasActiveSub, subscriptionTier, trialActive });
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
       subscription_tier: subscriptionTier,
-      subscription_end: subscriptionEnd
+      subscription_end: subscriptionEnd,
+      trial_active: trialActive,
+      trial_end: trialEnd
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

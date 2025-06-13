@@ -7,6 +7,8 @@ export interface SubscriptionStatus {
   subscribed: boolean;
   subscription_tier: string | null;
   subscription_end: string | null;
+  trial_active: boolean;
+  trial_end: string | null;
   loading: boolean;
 }
 
@@ -16,6 +18,8 @@ export const useSubscription = () => {
     subscribed: false,
     subscription_tier: null,
     subscription_end: null,
+    trial_active: false,
+    trial_end: null,
     loading: true,
   });
 
@@ -25,6 +29,8 @@ export const useSubscription = () => {
         subscribed: false,
         subscription_tier: null,
         subscription_end: null,
+        trial_active: false,
+        trial_end: null,
         loading: false,
       });
       return;
@@ -39,6 +45,8 @@ export const useSubscription = () => {
         subscribed: data.subscribed || false,
         subscription_tier: data.subscription_tier || null,
         subscription_end: data.subscription_end || null,
+        trial_active: data.trial_active || false,
+        trial_end: data.trial_end || null,
         loading: false,
       });
     } catch (error) {
@@ -47,6 +55,8 @@ export const useSubscription = () => {
         subscribed: false,
         subscription_tier: null,
         subscription_end: null,
+        trial_active: false,
+        trial_end: null,
         loading: false,
       });
     }

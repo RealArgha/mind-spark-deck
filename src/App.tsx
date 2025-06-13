@@ -9,7 +9,7 @@ import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import FlashcardsPage from "./pages/FlashcardsPage";
 import QuizPage from "./pages/QuizPage";
-import UploadSection from "./components/UploadSection";
+import UploadPage from "./pages/UploadPage";
 import AuthPage from "./pages/AuthPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
 import NotFound from "./pages/NotFound";
@@ -23,7 +23,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-indigo-50">
+      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-indigo-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
@@ -42,8 +42,8 @@ const AppContent = () => {
   const showMobileNav = user && location.pathname !== '/' && location.pathname !== '/auth';
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-indigo-50">
-      <div className="flex-1 pb-20">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 to-indigo-50 overflow-hidden">
+      <div className="flex-1 overflow-hidden">
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<AuthPage />} />
@@ -64,11 +64,7 @@ const AppContent = () => {
           } />
           <Route path="/upload" element={
             <ProtectedRoute>
-              <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
-                <div className="container mx-auto px-4">
-                  <UploadSection />
-                </div>
-              </div>
+              <UploadPage />
             </ProtectedRoute>
           } />
           <Route path="/subscription" element={
