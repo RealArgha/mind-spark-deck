@@ -20,7 +20,8 @@ const plans = {
     icon: Crown,
     features: ['Unlimited flashcards', 'AI-powered generation', 'Spaced repetition', 'Progress tracking'],
     color: 'from-blue-500 to-indigo-600',
-    badge: '$4.99/month'
+    badge: '$4.99/month',
+    popular: false
   },
   lifetime: {
     name: 'Lifetime Access',
