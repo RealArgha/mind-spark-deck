@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Home, Upload, Brain, User } from 'lucide-react';
+import { BookOpen, Home, Upload, Brain, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const MobileNavbar = () => {
@@ -12,11 +12,11 @@ const MobileNavbar = () => {
     { path: '/upload', icon: Upload, label: 'Upload' },
     { path: '/flashcards', icon: BookOpen, label: 'Cards' },
     { path: '/quiz', icon: Brain, label: 'Quiz' },
-    { path: '/login', icon: User, label: 'Profile' },
+    { path: '/subscription', icon: CreditCard, label: 'Plans' },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-slate-200 z-50">
       <div className="flex justify-around items-center py-2 px-4 safe-area-inset-bottom">
         {navItems.map(({ path, icon: Icon, label }) => (
           <Link key={path} to={path} className="flex-1">
@@ -25,8 +25,8 @@ const MobileNavbar = () => {
               size="sm"
               className={`w-full flex flex-col items-center gap-1 h-auto py-2 ${
                 location.pathname === path 
-                  ? 'text-foreground' 
-                  : 'text-muted-foreground'
+                  ? 'text-indigo-600 bg-indigo-50' 
+                  : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
               }`}
             >
               <Icon className="h-4 w-4" />

@@ -9,7 +9,143 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      content: {
+        Row: {
+          content_type: string
+          created_at: string
+          file_url: string | null
+          flashcards_generated: boolean | null
+          id: string
+          text_content: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          file_url?: string | null
+          flashcards_generated?: boolean | null
+          id?: string
+          text_content?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          file_url?: string | null
+          flashcards_generated?: boolean | null
+          id?: string
+          text_content?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      flashcards: {
+        Row: {
+          answer: string
+          content_id: string
+          created_at: string
+          difficulty: number | null
+          id: string
+          next_review: string | null
+          question: string
+          user_id: string
+        }
+        Insert: {
+          answer: string
+          content_id: string
+          created_at?: string
+          difficulty?: number | null
+          id?: string
+          next_review?: string | null
+          question: string
+          user_id: string
+        }
+        Update: {
+          answer?: string
+          content_id?: string
+          created_at?: string
+          difficulty?: number | null
+          id?: string
+          next_review?: string | null
+          question?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcards_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          stripe_customer_id: string | null
+          subscribed: boolean
+          subscription_end: string | null
+          subscription_tier: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

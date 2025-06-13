@@ -3,39 +3,79 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import FlashcardsPage from "./pages/FlashcardsPage";
 import QuizPage from "./pages/QuizPage";
 import UploadSection from "./components/UploadSection";
-import LoginPage from "./pages/LoginPage";
+import AuthPage from "./pages/AuthPage";
+import SubscriptionPage from "./pages/SubscriptionPage";
 import NotFound from "./pages/NotFound";
 import MobileNavbar from "./components/MobileNavbar";
 import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 const AppContent = () => {
   const location = useLocation();
-  const showMobileNav = location.pathname !== '/';
+  const { user } = useAuth();
+  const showMobileNav = user && location.pathname !== '/' && location.pathname !== '/auth';
 
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex-1 pb-20">
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/flashcards" element={<FlashcardsPage />} />
-          <Route path="/quiz" element={<QuizPage />} />
-          <Route path="/upload" element={
-            <div className="min-h-screen bg-gradient-to-br from-background to-purple-50/20">
-              <div className="container mx-auto px-4">
-                <UploadSection />
-              </div>
-            </div>
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
           } />
-          <Route path="/login" element={<LoginPage />} />
+          <Route path="/flashcards" element={
+            <ProtectedRoute>
+              <FlashcardsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/quiz" element={
+            <ProtectedRoute>
+              <QuizPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/upload" element={
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
+                <div className="container mx-auto px-4">
+                  <UploadSection />
+                </div>
+              </div>
+            </ProtectedRoute>
+          } />
+          <Route path="/subscription" element={
+            <ProtectedRoute>
+              <SubscriptionPage />
+            </ProtectedRoute>
+          } />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
@@ -50,7 +90,9 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AppContent />
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
