@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { BookOpen, Brain, Zap, Upload, Quiz, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BookOpen, Brain, Zap, Upload, HelpCircle, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface OnboardingCard {
@@ -32,7 +32,7 @@ const OnboardingScreen = () => {
     {
       title: "Interactive Quizzes",
       description: "Test your knowledge with adaptive quizzes that adjust to your learning pace",
-      icon: Quiz,
+      icon: HelpCircle,
       gradient: "from-green-500 to-emerald-600"
     },
     {
