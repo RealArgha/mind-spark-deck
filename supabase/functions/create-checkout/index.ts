@@ -9,9 +9,8 @@ const corsHeaders = {
 };
 
 const pricingPlans = {
-  basic: { price: 900, name: "Basic Plan" },
-  premium: { price: 1900, name: "Premium Plan" },
-  pro: { price: 3900, name: "Pro Plan" }
+  monthly: { price: 499, name: "Monthly Subscription" }, // $4.99
+  lifetime: { price: 4000, name: "Lifetime Access" }     // $40.00
 };
 
 serve(async (req) => {
@@ -31,8 +30,8 @@ serve(async (req) => {
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
 
-    const { tier = 'premium' } = await req.json();
-    const plan = pricingPlans[tier as keyof typeof pricingPlans] || pricingPlans.premium;
+    const { planType = 'monthly' } = await req.json();
+    const plan = pricingPlans[planType as keyof typeof pricingPlans] || pricingPlans.monthly;
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2023-10-16" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
@@ -41,7 +40,7 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig: any = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
@@ -50,15 +49,23 @@ serve(async (req) => {
             currency: "usd",
             product_data: { name: plan.name },
             unit_amount: plan.price,
-            recurring: { interval: "month" },
           },
           quantity: 1,
         },
       ],
-      mode: "subscription",
       success_url: `${req.headers.get("origin")}/dashboard?success=true`,
       cancel_url: `${req.headers.get("origin")}/subscription?canceled=true`,
-    });
+    };
+
+    // Add recurring billing only for monthly plan
+    if (planType === 'monthly') {
+      sessionConfig.line_items[0].price_data.recurring = { interval: "month" };
+      sessionConfig.mode = "subscription";
+    } else {
+      sessionConfig.mode = "payment";
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

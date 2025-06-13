@@ -7,7 +7,7 @@ import SubscriptionCard from '@/components/SubscriptionCard';
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { CreditCard, RefreshCw } from 'lucide-react';
+import { CreditCard, RefreshCw, Star } from 'lucide-react';
 
 const SubscriptionPage = () => {
   const { subscribed, subscription_tier, subscription_end, loading, refetch } = useSubscription();
@@ -34,19 +34,22 @@ const SubscriptionPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
-      <MobileHeader title="Subscription" />
+      <MobileHeader title="Choose Your Plan" />
       
       <div className="px-4 py-6 space-y-6">
         {/* Current Status */}
         {subscribed && (
-          <Card className="border-0 shadow-sm bg-white/80 backdrop-blur-sm">
+          <Card className="border-0 shadow-sm bg-white/90 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-lg text-slate-800">Current Subscription</CardTitle>
+              <CardTitle className="text-lg text-slate-800 flex items-center">
+                <Star className="h-5 w-5 text-yellow-500 mr-2" />
+                Your Current Plan
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-600">Plan</span>
-                <span className="font-medium capitalize">{subscription_tier || 'Unknown'}</span>
+                <span className="font-medium capitalize">{subscription_tier || 'Active'}</span>
               </div>
               {subscription_end && (
                 <div className="flex justify-between items-center">
@@ -78,40 +81,51 @@ const SubscriptionPage = () => {
           </Card>
         )}
 
-        {/* Plans */}
+        {/* Plan Selection */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-slate-800 px-2">Choose Your Plan</h2>
-          <div className="grid gap-4">
-            <SubscriptionCard tier="basic" currentTier={subscription_tier} />
-            <SubscriptionCard tier="premium" currentTier={subscription_tier} />
-            <SubscriptionCard tier="pro" currentTier={subscription_tier} />
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Unlock Premium Features</h2>
+            <p className="text-slate-600">Choose the plan that works best for you</p>
+          </div>
+          
+          <div className="grid gap-6">
+            <SubscriptionCard planType="lifetime" currentTier={subscription_tier} />
+            <SubscriptionCard planType="monthly" currentTier={subscription_tier} />
           </div>
         </div>
 
-        {/* Features Comparison */}
-        <Card className="border-0 shadow-sm bg-white/80 backdrop-blur-sm">
+        {/* Features */}
+        <Card className="border-0 shadow-sm bg-white/90 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-lg text-slate-800">Why Upgrade?</CardTitle>
+            <CardTitle className="text-lg text-slate-800">What You Get</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid gap-3 text-sm">
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                <span>AI-Generated Flashcards</span>
-                <span className="text-slate-500">Unlimited</span>
+              <div className="flex items-center py-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                <span>Unlimited AI-generated flashcards</span>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                <span>Advanced Study Analytics</span>
-                <span className="text-slate-500">Premium+</span>
+              <div className="flex items-center py-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                <span>Smart spaced repetition system</span>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                <span>Priority Support</span>
-                <span className="text-slate-500">All Plans</span>
+              <div className="flex items-center py-2">
+                <div className="w-2 h-2 bg-purple-500 rounded-full mr-3"></div>
+                <span>Progress tracking & analytics</span>
               </div>
-              <div className="flex items-center justify-between py-2">
-                <span>Custom AI Models</span>
-                <span className="text-slate-500">Pro Only</span>
+              <div className="flex items-center py-2">
+                <div className="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
+                <span>Multiple content formats (PDF, text, audio)</span>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Money Back Guarantee */}
+        <Card className="border-0 shadow-sm bg-gradient-to-r from-green-50 to-emerald-50">
+          <CardContent className="p-4 text-center">
+            <div className="text-green-700 font-medium mb-1">30-Day Money Back Guarantee</div>
+            <div className="text-sm text-green-600">Try risk-free. Cancel anytime.</div>
           </CardContent>
         </Card>
       </div>
