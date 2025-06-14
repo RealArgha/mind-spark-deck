@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, XCircle, Trophy, Plus, Brain } from 'lucide-react';
+import { CheckCircle, XCircle, Trophy, Plus, Brain, FileText, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MobileHeader from '@/components/MobileHeader';
 
@@ -41,24 +41,18 @@ const QuizPage = () => {
     const flashcardSets = JSON.parse(localStorage.getItem('flashcardSets') || '[]');
     const flashcardQuizzes = flashcardSets.map(set => ({
       id: `flashcard-${set.id}`,
-      name: `${set.name} (from flashcards)`,
+      name: `${set.name} (Quiz)`,
       questions: generateQuestionsFromFlashcards(set.cards),
       createdAt: set.createdAt,
-      source: 'Generated from flashcards'
+      source: set.source || 'Generated from flashcards'
     }));
 
     const allQuizzes = [...customQuizzes, ...flashcardQuizzes];
     setAvailableQuizzes(allQuizzes);
-
-    // Auto-select first quiz if available
-    if (allQuizzes.length > 0 && !selectedQuizId) {
-      setSelectedQuizId(allQuizzes[0].id);
-      setQuestions(allQuizzes[0].questions);
-    }
   }, [selectedQuizId]);
 
   const generateQuestionsFromFlashcards = (flashcards: any[]): Question[] => {
-    return flashcards.slice(0, 6).map((card, index) => {
+    return flashcards.slice(0, 10).map((card, index) => {
       // Generate better wrong answers based on content
       const wrongAnswers = [
         generateWrongAnswer(card.back, 'opposite'),
@@ -114,6 +108,16 @@ const QuizPage = () => {
     }
   };
 
+  const handleBackToSelection = () => {
+    setSelectedQuizId(null);
+    setQuestions([]);
+    setCurrentQuestion(0);
+    setScore(0);
+    setAnsweredQuestions([]);
+    setSelectedAnswer(null);
+    setShowResult(false);
+  };
+
   const isQuizComplete = currentQuestion >= questions.length;
   const progress = questions.length > 0 ? ((currentQuestion + 1) / questions.length) * 100 : 0;
 
@@ -153,8 +157,8 @@ const QuizPage = () => {
     setShowResult(false);
   };
 
-  // Show quiz selection if no quiz selected or multiple available
-  if (!selectedQuizId || (availableQuizzes.length > 1 && questions.length === 0)) {
+  // Show quiz selection if no quiz selected
+  if (!selectedQuizId) {
     return (
       <div className="h-screen bg-gradient-to-br from-background to-purple-50/20 flex flex-col">
         <MobileHeader title="Quiz Mode" showBack />
@@ -162,7 +166,7 @@ const QuizPage = () => {
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-lg font-semibold">Choose a Quiz</h2>
-              <p className="text-sm text-muted-foreground">Select from your custom quizzes or generated ones</p>
+              <p className="text-sm text-muted-foreground">Select from your collection</p>
             </div>
             <Link to="/create-quiz">
               <Button size="sm" className="bg-gradient-to-r from-primary to-purple-600">
@@ -178,7 +182,7 @@ const QuizPage = () => {
                 <Brain className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="font-semibold mb-2">No Quizzes Available</h3>
                 <p className="text-muted-foreground mb-4">
-                  Create custom quizzes or generate flashcards to get started.
+                  Create custom quizzes or generate from your flashcards.
                 </p>
                 <div className="space-y-2">
                   <Link to="/create-quiz">
@@ -197,17 +201,36 @@ const QuizPage = () => {
           ) : (
             <div className="space-y-3">
               {availableQuizzes.map((quiz) => (
-                <Card key={quiz.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => selectQuiz(quiz.id)}>
+                <Card 
+                  key={quiz.id} 
+                  className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-primary/20 hover:border-l-primary" 
+                  onClick={() => selectQuiz(quiz.id)}
+                >
                   <CardContent className="p-4">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="font-medium">{quiz.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {quiz.questions.length} questions • {quiz.source}
-                        </p>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <Brain className="h-4 w-4 text-primary" />
+                          <h3 className="font-medium text-base">{quiz.name}</h3>
+                        </div>
+                        <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
+                          <span className="flex items-center space-x-1">
+                            <FileText className="h-3 w-3" />
+                            <span>{quiz.questions.length} questions</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <Calendar className="h-3 w-3" />
+                            <span>{new Date(quiz.createdAt).toLocaleDateString()}</span>
+                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded inline-block">
+                          Source: {quiz.source}
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {new Date(quiz.createdAt).toLocaleDateString()}
+                      <div className="ml-4">
+                        <Button size="sm" variant="ghost" className="text-primary">
+                          Start →
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -254,10 +277,7 @@ const QuizPage = () => {
                 <Button 
                   variant="ghost" 
                   className="w-full"
-                  onClick={() => {
-                    setSelectedQuizId(null);
-                    setQuestions([]);
-                  }}
+                  onClick={handleBackToSelection}
                 >
                   Choose Different Quiz
                 </Button>
@@ -297,16 +317,16 @@ const QuizPage = () => {
                   key={index}
                   onClick={() => !showResult && handleAnswerSelect(index)}
                   disabled={showResult}
-                  className={`w-full p-4 text-left border rounded-lg transition-colors text-sm ${
+                  className={`w-full p-4 text-left border rounded-lg transition-all text-sm ${
                     selectedAnswer === index
                       ? showResult
                         ? index === currentQ.correctAnswer
-                          ? 'border-green-500 bg-green-50 text-green-700'
-                          : 'border-red-500 bg-red-50 text-red-700'
-                        : 'border-primary bg-primary/5'
+                          ? 'border-green-500 bg-green-50 text-green-700 shadow-sm'
+                          : 'border-red-500 bg-red-50 text-red-700 shadow-sm'
+                        : 'border-primary bg-primary/10 shadow-sm'
                       : showResult && index === currentQ.correctAnswer
-                      ? 'border-green-500 bg-green-50 text-green-700'
-                      : 'border-border hover:border-primary hover:bg-primary/5'
+                      ? 'border-green-500 bg-green-50 text-green-700 shadow-sm'
+                      : 'border-border hover:border-primary hover:bg-primary/5 hover:shadow-sm'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -323,8 +343,8 @@ const QuizPage = () => {
             </div>
 
             {showResult && (
-              <div className="p-4 bg-secondary/50 rounded-lg">
-                <h4 className="font-semibold mb-2 text-sm">Explanation:</h4>
+              <div className="p-4 bg-secondary/50 rounded-lg border">
+                <h4 className="font-semibold mb-2 text-sm text-primary">Explanation:</h4>
                 <p className="text-sm text-muted-foreground leading-relaxed">{currentQ.explanation}</p>
               </div>
             )}

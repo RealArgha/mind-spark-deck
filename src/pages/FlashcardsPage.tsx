@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import FlashcardViewer from '@/components/FlashcardViewer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy, Plus } from 'lucide-react';
+import { Trophy, Plus, FileText, Brain, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MobileHeader from '@/components/MobileHeader';
 
@@ -29,10 +29,6 @@ const FlashcardsPage = () => {
           if (selectedSet) {
             setCards(selectedSet.cards);
           }
-        } else if (sets.length > 0) {
-          // Auto-select first set if none selected
-          setSelectedSetId(sets[0].id);
-          setCards(sets[0].cards);
         }
       } catch (error) {
         console.error('Error parsing stored flashcard sets:', error);
@@ -50,11 +46,10 @@ const FlashcardsPage = () => {
               id: 'default',
               name: 'Generated Flashcards',
               cards: parsedCards,
-              createdAt: Date.now()
+              createdAt: Date.now(),
+              source: 'Uploaded Content'
             };
             setFlashcardSets([defaultSet]);
-            setSelectedSetId('default');
-            setCards(parsedCards);
             // Save to new format
             localStorage.setItem('flashcardSets', JSON.stringify([defaultSet]));
             return;
@@ -84,12 +79,11 @@ const FlashcardsPage = () => {
         id: 'sample',
         name: 'Sample Biology Cards',
         cards: sampleCards,
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        source: 'Sample Content'
       };
       
       setFlashcardSets([sampleSet]);
-      setSelectedSetId('sample');
-      setCards(sampleCards);
       localStorage.setItem('flashcardSets', JSON.stringify([sampleSet]));
     }
   }, [selectedSetId]);
@@ -101,6 +95,12 @@ const FlashcardsPage = () => {
       setCards(selectedSet.cards);
       setIsCompleted(false);
     }
+  };
+
+  const handleBackToSelection = () => {
+    setSelectedSetId(null);
+    setCards([]);
+    setIsCompleted(false);
   };
 
   if (isCompleted) {
@@ -132,6 +132,13 @@ const FlashcardsPage = () => {
                 >
                   Study Again
                 </Button>
+                <Button 
+                  variant="ghost" 
+                  className="w-full"
+                  onClick={handleBackToSelection}
+                >
+                  Choose Different Set
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -140,14 +147,17 @@ const FlashcardsPage = () => {
     );
   }
 
-  // Show set selection if multiple sets available
-  if (flashcardSets.length > 1 && !selectedSetId) {
+  // Show set selection
+  if (!selectedSetId) {
     return (
       <div className="h-screen bg-gradient-to-br from-background to-purple-50/20 flex flex-col">
         <MobileHeader title="Your Flashcard Sets" showBack />
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold">Choose a flashcard set</h2>
+            <div>
+              <h2 className="text-lg font-semibold">Choose a flashcard set</h2>
+              <p className="text-sm text-muted-foreground">Select from your collection</p>
+            </div>
             <Link to="/create-flashcards">
               <Button size="sm" className="bg-gradient-to-r from-primary to-purple-600">
                 <Plus className="h-4 w-4 mr-2" />
@@ -155,23 +165,69 @@ const FlashcardsPage = () => {
               </Button>
             </Link>
           </div>
-          <div className="space-y-3">
-            {flashcardSets.map((set) => (
-              <Card key={set.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleSetSelect(set.id)}>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-medium">{set.name}</h3>
-                      <p className="text-sm text-muted-foreground">{set.cards.length} cards</p>
+          
+          {flashcardSets.length === 0 ? (
+            <Card className="text-center p-6">
+              <CardContent>
+                <Brain className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="font-semibold mb-2">No Flashcards Available</h3>
+                <p className="text-muted-foreground mb-4">
+                  Create custom flashcards or upload content to get started.
+                </p>
+                <div className="space-y-2">
+                  <Link to="/create-flashcards">
+                    <Button className="w-full bg-gradient-to-r from-primary to-purple-600">
+                      Create Custom Cards
+                    </Button>
+                  </Link>
+                  <Link to="/upload">
+                    <Button variant="outline" className="w-full">
+                      Generate from Content
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {flashcardSets.map((set) => (
+                <Card 
+                  key={set.id} 
+                  className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-primary/20 hover:border-l-primary" 
+                  onClick={() => handleSetSelect(set.id)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <FileText className="h-4 w-4 text-primary" />
+                          <h3 className="font-medium text-base">{set.name}</h3>
+                        </div>
+                        <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
+                          <span className="flex items-center space-x-1">
+                            <Brain className="h-3 w-3" />
+                            <span>{set.cards.length} cards</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <Calendar className="h-3 w-3" />
+                            <span>{new Date(set.createdAt).toLocaleDateString()}</span>
+                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded inline-block">
+                          Source: {set.source || 'Unknown'}
+                        </div>
+                      </div>
+                      <div className="ml-4">
+                        <Button size="sm" variant="ghost" className="text-primary">
+                          Study →
+                        </Button>
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {new Date(set.createdAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     );
