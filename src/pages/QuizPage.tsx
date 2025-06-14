@@ -1,11 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, XCircle, ArrowLeft, Trophy } from 'lucide-react';
+import { CheckCircle, XCircle, Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Navbar from '@/components/Navbar';
+import MobileHeader from '@/components/MobileHeader';
 
 interface Question {
   id: string;
@@ -15,46 +15,96 @@ interface Question {
   explanation: string;
 }
 
+interface Flashcard {
+  id: string;
+  front: string;
+  back: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+}
+
 const QuizPage = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [answeredQuestions, setAnsweredQuestions] = useState<boolean[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
 
-  const questions: Question[] = [
-    {
-      id: '1',
-      question: 'What is the powerhouse of the cell?',
-      options: ['Nucleus', 'Mitochondria', 'Ribosome', 'Endoplasmic Reticulum'],
-      correctAnswer: 1,
-      explanation: 'The mitochondria is known as the powerhouse of the cell because it produces ATP (energy) through cellular respiration.'
-    },
-    {
-      id: '2',
-      question: 'Which process do plants use to make their own food?',
-      options: ['Respiration', 'Photosynthesis', 'Digestion', 'Fermentation'],
-      correctAnswer: 1,
-      explanation: 'Photosynthesis is the process by which plants convert light energy, CO₂, and water into glucose and oxygen.'
-    },
-    {
-      id: '3',
-      question: 'What is the basic unit of heredity?',
-      options: ['Chromosome', 'DNA', 'Gene', 'Protein'],
-      correctAnswer: 2,
-      explanation: 'A gene is the basic unit of heredity that contains the instructions for building proteins and determining traits.'
-    },
-    {
-      id: '4',
-      question: 'Which type of cell division produces gametes?',
-      options: ['Mitosis', 'Meiosis', 'Binary fission', 'Cytokinesis'],
-      correctAnswer: 1,
-      explanation: 'Meiosis is the type of cell division that produces gametes (sex cells) with half the chromosome number.'
+  useEffect(() => {
+    // Load flashcards and generate quiz questions
+    const storedCards = localStorage.getItem('generatedFlashcards');
+    let flashcards: Flashcard[] = [];
+    
+    if (storedCards) {
+      try {
+        const parsedCards = JSON.parse(storedCards);
+        if (Array.isArray(parsedCards) && parsedCards.length > 0) {
+          flashcards = parsedCards;
+        }
+      } catch (error) {
+        console.error('Error parsing stored flashcards:', error);
+      }
     }
-  ];
+    
+    // If no stored flashcards, use sample cards
+    if (flashcards.length === 0) {
+      flashcards = [
+        {
+          id: '1',
+          front: 'What is the powerhouse of the cell?',
+          back: 'The mitochondria is the powerhouse of the cell, responsible for producing ATP through cellular respiration.',
+          difficulty: 'easy'
+        },
+        {
+          id: '2',
+          front: 'Define photosynthesis',
+          back: 'Photosynthesis is the process by which plants convert light energy, carbon dioxide, and water into glucose and oxygen.',
+          difficulty: 'medium'
+        },
+        {
+          id: '3',
+          front: 'What is DNA replication?',
+          back: 'DNA replication is the process by which DNA makes a copy of itself during cell division, ensuring genetic information is passed to daughter cells.',
+          difficulty: 'hard'
+        },
+        {
+          id: '4',
+          front: 'Explain the difference between mitosis and meiosis',
+          back: 'Mitosis produces two identical diploid cells for growth and repair, while meiosis produces four genetically different haploid gametes for reproduction.',
+          difficulty: 'hard'
+        }
+      ];
+    }
+
+    // Generate quiz questions from flashcards
+    const generatedQuestions = flashcards.slice(0, 4).map((card, index) => {
+      const wrongAnswers = generateWrongAnswers(card.back);
+      const allOptions = [card.back, ...wrongAnswers].sort(() => Math.random() - 0.5);
+      const correctIndex = allOptions.indexOf(card.back);
+
+      return {
+        id: card.id,
+        question: card.front,
+        options: allOptions,
+        correctAnswer: correctIndex,
+        explanation: card.back
+      };
+    });
+
+    setQuestions(generatedQuestions);
+  }, []);
+
+  const generateWrongAnswers = (correctAnswer: string): string[] => {
+    const wrongAnswers = [
+      'This is an incorrect answer option',
+      'Another wrong choice',
+      'Definitely not the right answer'
+    ];
+    return wrongAnswers;
+  };
 
   const isQuizComplete = currentQuestion >= questions.length;
-  const progress = ((currentQuestion + 1) / questions.length) * 100;
+  const progress = questions.length > 0 ? ((currentQuestion + 1) / questions.length) * 100 : 0;
 
   const handleAnswerSelect = (answerIndex: number) => {
     setSelectedAnswer(answerIndex);
@@ -84,18 +134,48 @@ const QuizPage = () => {
     setShowResult(false);
   };
 
+  const resetQuiz = () => {
+    setCurrentQuestion(0);
+    setScore(0);
+    setAnsweredQuestions([]);
+    setSelectedAnswer(null);
+    setShowResult(false);
+  };
+
+  if (questions.length === 0) {
+    return (
+      <div className="h-full bg-gradient-to-br from-background to-purple-50/20 flex flex-col">
+        <MobileHeader title="Quiz Mode" showBack />
+        <div className="flex-1 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md text-center">
+            <CardContent className="p-6">
+              <p className="text-muted-foreground mb-4">
+                No flashcards available for quiz. Please create some flashcards first.
+              </p>
+              <Link to="/upload">
+                <Button className="w-full bg-gradient-to-r from-primary to-purple-600">
+                  Create Flashcards
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   if (isQuizComplete) {
     const percentage = Math.round((score / questions.length) * 100);
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-purple-50/20">
-        <Navbar />
-        <div className="container mx-auto px-4 py-20">
-          <Card className="max-w-2xl mx-auto text-center">
+      <div className="h-full bg-gradient-to-br from-background to-purple-50/20 flex flex-col">
+        <MobileHeader title="Quiz Complete" showBack />
+        <div className="flex-1 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md text-center">
             <CardHeader>
               <div className="mx-auto w-16 h-16 bg-gradient-to-r from-primary to-purple-600 rounded-full flex items-center justify-center mb-4">
                 <Trophy className="h-8 w-8 text-white" />
               </div>
-              <CardTitle className="text-3xl">Quiz Complete!</CardTitle>
+              <CardTitle className="text-2xl">Quiz Complete!</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-6xl font-bold text-primary mb-4">{percentage}%</div>
@@ -111,13 +191,7 @@ const QuizPage = () => {
                 <Button 
                   variant="outline" 
                   className="w-full"
-                  onClick={() => {
-                    setCurrentQuestion(0);
-                    setScore(0);
-                    setAnsweredQuestions([]);
-                    setSelectedAnswer(null);
-                    setShowResult(false);
-                  }}
+                  onClick={resetQuiz}
                 >
                   Retake Quiz
                 </Button>
@@ -132,37 +206,33 @@ const QuizPage = () => {
   const currentQ = questions[currentQuestion];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-purple-50/20">
-      <Navbar />
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto">
-          <div className="mb-6">
-            <Link to="/dashboard">
-              <Button variant="ghost" className="mb-4">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </Link>
-            
-            <div className="flex justify-between text-sm text-muted-foreground mb-2">
+    <div className="h-full bg-gradient-to-br from-background to-purple-50/20 flex flex-col">
+      <MobileHeader title="Quiz Mode" showBack />
+      
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 space-y-4">
+          {/* Progress Section */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm text-muted-foreground">
               <span>Question {currentQuestion + 1} of {questions.length}</span>
               <span>Score: {score}/{currentQuestion}</span>
             </div>
-            <Progress value={progress} className="mb-4" />
+            <Progress value={progress} className="h-2" />
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl">{currentQ.question}</CardTitle>
+          {/* Question Card */}
+          <Card className="border-0 shadow-sm bg-white/90 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg leading-relaxed">{currentQ.question}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3 mb-6">
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
                 {currentQ.options.map((option, index) => (
                   <button
                     key={index}
                     onClick={() => !showResult && handleAnswerSelect(index)}
                     disabled={showResult}
-                    className={`w-full p-4 text-left border rounded-lg transition-colors ${
+                    className={`w-full p-4 text-left border rounded-lg transition-colors text-sm ${
                       selectedAnswer === index
                         ? showResult
                           ? index === currentQ.correctAnswer
@@ -175,12 +245,12 @@ const QuizPage = () => {
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span>{option}</span>
+                      <span className="leading-relaxed">{option}</span>
                       {showResult && index === currentQ.correctAnswer && (
-                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
                       )}
                       {showResult && selectedAnswer === index && index !== currentQ.correctAnswer && (
-                        <XCircle className="h-5 w-5 text-red-600" />
+                        <XCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
                       )}
                     </div>
                   </button>
@@ -188,13 +258,13 @@ const QuizPage = () => {
               </div>
 
               {showResult && (
-                <div className="p-4 bg-secondary/50 rounded-lg mb-6">
-                  <h4 className="font-semibold mb-2">Explanation:</h4>
-                  <p className="text-sm text-muted-foreground">{currentQ.explanation}</p>
+                <div className="p-4 bg-secondary/50 rounded-lg">
+                  <h4 className="font-semibold mb-2 text-sm">Explanation:</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{currentQ.explanation}</p>
                 </div>
               )}
 
-              <div className="flex justify-end">
+              <div className="flex justify-end pt-2">
                 {!showResult ? (
                   <Button 
                     onClick={handleSubmitAnswer}
@@ -204,7 +274,10 @@ const QuizPage = () => {
                     Submit Answer
                   </Button>
                 ) : (
-                  <Button onClick={handleNextQuestion}>
+                  <Button 
+                    onClick={handleNextQuestion}
+                    className="bg-gradient-to-r from-primary to-purple-600"
+                  >
                     {currentQuestion === questions.length - 1 ? 'Finish Quiz' : 'Next Question'}
                   </Button>
                 )}
