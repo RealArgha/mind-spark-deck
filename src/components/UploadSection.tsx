@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -53,23 +52,72 @@ const UploadSection = () => {
   };
 
   const generateFlashcardsFromContent = (content: string) => {
-    // Simple flashcard generation based on content
-    const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 10);
+    // Enhanced flashcard generation with better question-answer pairs
+    const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 20);
     const flashcards = [];
     
-    for (let i = 0; i < Math.min(sentences.length, 10); i++) {
+    // Define patterns for different types of questions
+    const questionPatterns = [
+      { pattern: /(.+) is (.+)/i, template: (match: RegExpMatchArray) => ({ q: `What is ${match[1]}?`, a: match[2].trim() }) },
+      { pattern: /(.+) are (.+)/i, template: (match: RegExpMatchArray) => ({ q: `What are ${match[1]}?`, a: match[2].trim() }) },
+      { pattern: /(.+) occurs (.+)/i, template: (match: RegExpMatchArray) => ({ q: `Where does ${match[1]} occur?`, a: match[2].trim() }) },
+      { pattern: /(.+) process (.+)/i, template: (match: RegExpMatchArray) => ({ q: `Describe the ${match[1]} process`, a: `The ${match[1]} process ${match[2].trim()}` }) },
+      { pattern: /(.+) contains (.+)/i, template: (match: RegExpMatchArray) => ({ q: `What does ${match[1]} contain?`, a: match[2].trim() }) },
+      { pattern: /(.+) produces (.+)/i, template: (match: RegExpMatchArray) => ({ q: `What does ${match[1]} produce?`, a: match[2].trim() }) },
+    ];
+
+    for (let i = 0; i < Math.min(sentences.length, 12); i++) {
       const sentence = sentences[i].trim();
-      if (sentence) {
-        // Create question-answer pairs
-        const words = sentence.split(' ');
-        if (words.length > 5) {
-          const keyWord = words[Math.floor(words.length / 2)];
-          const question = `What is the key concept related to: ${keyWord}?`;
+      if (sentence.length < 30) continue;
+
+      let questionCreated = false;
+
+      // Try to match patterns
+      for (const pattern of questionPatterns) {
+        const match = sentence.match(pattern.pattern);
+        if (match) {
+          const qa = pattern.template(match);
           flashcards.push({
-            id: `card-${i + 1}`,
-            front: question,
+            id: `card-${flashcards.length + 1}`,
+            front: qa.q,
+            back: qa.a,
+            difficulty: sentence.length > 100 ? 'hard' : sentence.length > 60 ? 'medium' : 'easy'
+          });
+          questionCreated = true;
+          break;
+        }
+      }
+
+      // If no pattern matched, create a general comprehension question
+      if (!questionCreated && sentence.length > 40) {
+        const words = sentence.split(' ');
+        const keyWords = words.filter(word => 
+          word.length > 4 && 
+          !['that', 'this', 'with', 'from', 'they', 'have', 'been', 'will', 'would', 'could', 'should'].includes(word.toLowerCase())
+        );
+        
+        if (keyWords.length > 0) {
+          const keyWord = keyWords[0];
+          flashcards.push({
+            id: `card-${flashcards.length + 1}`,
+            front: `Explain the concept involving "${keyWord}"`,
             back: sentence,
-            difficulty: Math.random() > 0.7 ? 'hard' : Math.random() > 0.4 ? 'medium' : 'easy'
+            difficulty: sentence.length > 100 ? 'hard' : sentence.length > 60 ? 'medium' : 'easy'
+          });
+        }
+      }
+    }
+
+    // If we still don't have enough cards, create some basic ones
+    if (flashcards.length < 3 && sentences.length > 0) {
+      for (let i = 0; i < Math.min(3, sentences.length); i++) {
+        const sentence = sentences[i].trim();
+        if (sentence.length > 20) {
+          flashcards.push({
+            id: `card-${flashcards.length + 1}`,
+            front: `What is described in this statement?`,
+            back: sentence,
+            difficulty: 'medium'
           });
         }
       }
@@ -96,12 +144,17 @@ const UploadSection = () => {
       let contentToProcess = text;
       
       if (uploadedFile) {
-        // Simulate PDF text extraction
+        // Enhanced PDF content simulation with more educational content
         contentToProcess += `\n\nExtracted from ${uploadedFile.name}:\n` +
-          "Photosynthesis is the process by which plants convert light energy into chemical energy. " +
-          "This process occurs in the chloroplasts of plant cells. " +
+          "Photosynthesis is the biological process by which plants convert light energy into chemical energy. " +
+          "This process occurs in the chloroplasts of plant cells, specifically in structures called thylakoids. " +
           "The main equation for photosynthesis is: 6CO2 + 6H2O + light energy → C6H12O6 + 6O2. " +
-          "Cellular respiration is the opposite process where glucose is broken down to release energy.";
+          "Chlorophyll is the green pigment that captures light energy during photosynthesis. " +
+          "Cellular respiration is the opposite process where glucose is broken down to release ATP energy. " +
+          "Mitochondria are organelles that produce ATP through cellular respiration. " +
+          "DNA replication occurs during the S phase of the cell cycle. " +
+          "Enzymes are proteins that catalyze biochemical reactions by lowering activation energy. " +
+          "Osmosis is the movement of water across a semipermeable membrane from low to high solute concentration.";
       }
       
       // Generate flashcards from content
