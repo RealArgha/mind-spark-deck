@@ -62,16 +62,16 @@ const FlashcardViewer = ({ cards, onComplete }: FlashcardViewerProps) => {
   if (!currentCard) return null;
 
   return (
-    <div className="h-full flex flex-col max-w-2xl mx-auto p-4">
+    <div className="h-full flex flex-col p-4 max-w-2xl mx-auto overflow-hidden">
       {/* Show ad before flashcard for trial users */}
       {showAds && currentIndex === 0 && (
-        <div className="flex-shrink-0 mb-4">
+        <div className="mb-4">
           <AdBanner slot="1234567890" className="text-center" />
         </div>
       )}
 
       {/* Progress Bar */}
-      <div className="flex-shrink-0 mb-4">
+      <div className="mb-4">
         <div className="flex justify-between text-sm text-muted-foreground mb-2">
           <span>Card {currentIndex + 1} of {cards.length}</span>
           <span>{Math.round(progress)}% Complete</span>
@@ -84,13 +84,12 @@ const FlashcardViewer = ({ cards, onComplete }: FlashcardViewerProps) => {
         </div>
       </div>
 
-      {/* Flashcard - Takes remaining space */}
-      <div className="flex-1 min-h-0 mb-4" style={{ perspective: '1000px' }}>
+      {/* Flashcard Container - Fixed height to prevent overlap */}
+      <div className="flex-1 relative mb-4" style={{ minHeight: '300px', maxHeight: '60vh' }}>
         <div
-          className={`
-            relative w-full h-full cursor-pointer transition-transform duration-700 ease-in-out
-          `}
+          className="absolute inset-0 cursor-pointer transition-transform duration-700 ease-in-out"
           style={{
+            perspective: '1000px',
             transformStyle: 'preserve-3d',
             transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
           }}
@@ -138,8 +137,20 @@ const FlashcardViewer = ({ cards, onComplete }: FlashcardViewerProps) => {
         </div>
       </div>
 
+      {/* Difficulty Rating (when flipped) - Compact */}
+      {isFlipped && (
+        <div className="p-3 bg-secondary/50 rounded-lg mb-3">
+          <p className="text-xs text-muted-foreground mb-2">How difficult was this card?</p>
+          <div className="flex space-x-2">
+            <Button variant="outline" size="sm" className="text-green-600 text-xs px-2 py-1">Easy</Button>
+            <Button variant="outline" size="sm" className="text-yellow-600 text-xs px-2 py-1">Medium</Button>
+            <Button variant="outline" size="sm" className="text-red-600 text-xs px-2 py-1">Hard</Button>
+          </div>
+        </div>
+      )}
+
       {/* Controls */}
-      <div className="flex items-center justify-between flex-shrink-0 mb-3">
+      <div className="flex items-center justify-between mb-3">
         <Button 
           variant="outline" 
           onClick={handlePrevious}
@@ -165,21 +176,9 @@ const FlashcardViewer = ({ cards, onComplete }: FlashcardViewerProps) => {
         </Button>
       </div>
 
-      {/* Difficulty Rating (when flipped) - Compact */}
-      {isFlipped && (
-        <div className="p-3 bg-secondary/50 rounded-lg flex-shrink-0 mb-3">
-          <p className="text-xs text-muted-foreground mb-2">How difficult was this card?</p>
-          <div className="flex space-x-2">
-            <Button variant="outline" size="sm" className="text-green-600 text-xs px-2 py-1">Easy</Button>
-            <Button variant="outline" size="sm" className="text-yellow-600 text-xs px-2 py-1">Medium</Button>
-            <Button variant="outline" size="sm" className="text-red-600 text-xs px-2 py-1">Hard</Button>
-          </div>
-        </div>
-      )}
-
       {/* Show ad after completing flashcard for trial users */}
       {showAds && currentIndex === cards.length - 1 && isFlipped && (
-        <div className="flex-shrink-0">
+        <div>
           <AdBanner slot="0987654321" className="text-center" />
         </div>
       )}

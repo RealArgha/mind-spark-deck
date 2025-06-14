@@ -52,6 +52,32 @@ const UploadSection = () => {
     }
   };
 
+  const generateFlashcardsFromContent = (content: string) => {
+    // Simple flashcard generation based on content
+    const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 10);
+    const flashcards = [];
+    
+    for (let i = 0; i < Math.min(sentences.length, 10); i++) {
+      const sentence = sentences[i].trim();
+      if (sentence) {
+        // Create question-answer pairs
+        const words = sentence.split(' ');
+        if (words.length > 5) {
+          const keyWord = words[Math.floor(words.length / 2)];
+          const question = `What is the key concept related to: ${keyWord}?`;
+          flashcards.push({
+            id: `card-${i + 1}`,
+            front: question,
+            back: sentence,
+            difficulty: Math.random() > 0.7 ? 'hard' : Math.random() > 0.4 ? 'medium' : 'easy'
+          });
+        }
+      }
+    }
+    
+    return flashcards;
+  };
+
   const generateFlashcards = async () => {
     const hasContent = text.trim() || uploadedFile;
     
@@ -66,128 +92,166 @@ const UploadSection = () => {
 
     setIsProcessing(true);
     
-    // Simulate processing
-    setTimeout(() => {
+    try {
+      let contentToProcess = text;
+      
+      if (uploadedFile) {
+        // Simulate PDF text extraction
+        contentToProcess += `\n\nExtracted from ${uploadedFile.name}:\n` +
+          "Photosynthesis is the process by which plants convert light energy into chemical energy. " +
+          "This process occurs in the chloroplasts of plant cells. " +
+          "The main equation for photosynthesis is: 6CO2 + 6H2O + light energy → C6H12O6 + 6O2. " +
+          "Cellular respiration is the opposite process where glucose is broken down to release energy.";
+      }
+      
+      // Generate flashcards from content
+      const generatedCards = generateFlashcardsFromContent(contentToProcess);
+      
+      if (generatedCards.length === 0) {
+        toast({
+          title: "Unable to generate flashcards",
+          description: "Please provide more detailed content for better flashcard generation.",
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+        return;
+      }
+      
+      // Store in localStorage for now (in real app, this would be saved to database)
+      localStorage.setItem('generatedFlashcards', JSON.stringify(generatedCards));
+      
+      setTimeout(() => {
+        setIsProcessing(false);
+        toast({
+          title: "Flashcards generated!",
+          description: `Created ${generatedCards.length} flashcards from your content.`,
+        });
+        // Navigate to flashcards page
+        navigate('/flashcards');
+      }, 2000);
+      
+    } catch (error) {
       setIsProcessing(false);
       toast({
-        title: "Flashcards generated!",
-        description: "Your study materials are ready for review.",
+        title: "Generation failed",
+        description: "There was an error generating your flashcards. Please try again.",
+        variant: "destructive",
       });
-      // Navigate to flashcards page
-      navigate('/flashcards');
-    }, 2000);
+    }
   };
 
   return (
-    <div className="p-4 space-y-6">
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold mb-2">Upload Your Study Material</h1>
-        <p className="text-muted-foreground text-sm">
-          Upload PDFs, paste text, or record voice notes to generate AI-powered flashcards
-        </p>
-      </div>
+    <div className="h-full overflow-y-auto">
+      <div className="p-4 space-y-6 pb-20">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold mb-2">Upload Your Study Material</h1>
+          <p className="text-muted-foreground text-sm">
+            Upload PDFs, paste text, or record voice notes to generate AI-powered flashcards
+          </p>
+        </div>
 
-      <div className="grid gap-4">
-        {/* File Upload */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Upload className="h-5 w-5 mr-2" />
-              Upload PDF
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors">
-              <FileText className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-              {uploadedFile ? (
-                <div>
-                  <p className="text-sm font-medium text-green-600 mb-2">
-                    ✓ {uploadedFile.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">File ready for processing</p>
-                </div>
-              ) : (
-                <>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Drag and drop your PDF here, or click to browse
-                  </p>
-                  <input
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="file-upload"
-                  />
-                  <label htmlFor="file-upload">
-                    <Button variant="outline" className="cursor-pointer" asChild>
-                      <span>Choose File</span>
-                    </Button>
-                  </label>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Voice Recording */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Mic className="h-5 w-5 mr-2" />
-              Voice Notes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center">
-              <Button
-                onClick={toggleRecording}
-                variant={isRecording ? "destructive" : "outline"}
-                size="lg"
-                className="mb-3"
-              >
-                {isRecording ? (
-                  <>
-                    <MicOff className="h-5 w-5 mr-2" />
-                    Stop Recording
-                  </>
+        <div className="grid gap-4">
+          {/* File Upload */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center text-lg">
+                <Upload className="h-5 w-5 mr-2" />
+                Upload PDF
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors">
+                <FileText className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+                {uploadedFile ? (
+                  <div>
+                    <p className="text-sm font-medium text-green-600 mb-2">
+                      ✓ {uploadedFile.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">File ready for processing</p>
+                  </div>
                 ) : (
                   <>
-                    <Mic className="h-5 w-5 mr-2" />
-                    Start Recording
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Drag and drop your PDF here, or click to browse
+                    </p>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="file-upload"
+                    />
+                    <label htmlFor="file-upload">
+                      <Button variant="outline" className="cursor-pointer" asChild>
+                        <span>Choose File</span>
+                      </Button>
+                    </label>
                   </>
                 )}
-              </Button>
-              {isRecording && (
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                  <span className="text-sm text-muted-foreground">Recording...</span>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Text Input */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Or Paste Your Text</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Textarea
-              placeholder="Paste your study material here..."
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              className="min-h-24 mb-4"
-            />
-            <Button 
-              onClick={generateFlashcards}
-              disabled={isProcessing}
-              className="w-full bg-gradient-to-r from-primary to-purple-600"
-            >
-              {isProcessing ? "Generating..." : "Generate Flashcards"}
-            </Button>
-          </CardContent>
-        </Card>
+          {/* Voice Recording */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center text-lg">
+                <Mic className="h-5 w-5 mr-2" />
+                Voice Notes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center">
+                <Button
+                  onClick={toggleRecording}
+                  variant={isRecording ? "destructive" : "outline"}
+                  size="lg"
+                  className="mb-3"
+                >
+                  {isRecording ? (
+                    <>
+                      <MicOff className="h-5 w-5 mr-2" />
+                      Stop Recording
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="h-5 w-5 mr-2" />
+                      Start Recording
+                    </>
+                  )}
+                </Button>
+                {isRecording && (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                    <span className="text-sm text-muted-foreground">Recording...</span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Text Input */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Or Paste Your Text</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                placeholder="Paste your study material here..."
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                className="min-h-32 mb-4"
+              />
+              <Button 
+                onClick={generateFlashcards}
+                disabled={isProcessing}
+                className="w-full bg-gradient-to-r from-primary to-purple-600"
+              >
+                {isProcessing ? "Generating..." : "Generate Flashcards"}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

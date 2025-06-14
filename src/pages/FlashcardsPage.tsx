@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import FlashcardViewer from '@/components/FlashcardViewer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,39 +9,49 @@ import MobileHeader from '@/components/MobileHeader';
 
 const FlashcardsPage = () => {
   const [isCompleted, setIsCompleted] = useState(false);
+  const [cards, setCards] = useState([]);
 
-  const sampleCards = [
-    {
-      id: '1',
-      front: 'What is the powerhouse of the cell?',
-      back: 'The mitochondria is the powerhouse of the cell, responsible for producing ATP through cellular respiration.',
-      difficulty: 'easy' as const
-    },
-    {
-      id: '2',
-      front: 'Define photosynthesis',
-      back: 'Photosynthesis is the process by which plants convert light energy, carbon dioxide, and water into glucose and oxygen.',
-      difficulty: 'medium' as const
-    },
-    {
-      id: '3',
-      front: 'What is DNA replication?',
-      back: 'DNA replication is the process by which DNA makes a copy of itself during cell division, ensuring genetic information is passed to daughter cells.',
-      difficulty: 'hard' as const
-    },
-    {
-      id: '4',
-      front: 'Explain the difference between mitosis and meiosis',
-      back: 'Mitosis produces two identical diploid cells for growth and repair, while meiosis produces four genetically different haploid gametes for reproduction.',
-      difficulty: 'hard' as const
-    },
-    {
-      id: '5',
-      front: 'What is osmosis?',
-      back: 'Osmosis is the movement of water molecules across a semi-permeable membrane from an area of low solute concentration to high solute concentration.',
-      difficulty: 'medium' as const
+  useEffect(() => {
+    // Try to load generated flashcards from localStorage
+    const storedCards = localStorage.getItem('generatedFlashcards');
+    if (storedCards) {
+      setCards(JSON.parse(storedCards));
+    } else {
+      // Fallback to sample cards
+      setCards([
+        {
+          id: '1',
+          front: 'What is the powerhouse of the cell?',
+          back: 'The mitochondria is the powerhouse of the cell, responsible for producing ATP through cellular respiration.',
+          difficulty: 'easy'
+        },
+        {
+          id: '2',
+          front: 'Define photosynthesis',
+          back: 'Photosynthesis is the process by which plants convert light energy, carbon dioxide, and water into glucose and oxygen.',
+          difficulty: 'medium'
+        },
+        {
+          id: '3',
+          front: 'What is DNA replication?',
+          back: 'DNA replication is the process by which DNA makes a copy of itself during cell division, ensuring genetic information is passed to daughter cells.',
+          difficulty: 'hard'
+        },
+        {
+          id: '4',
+          front: 'Explain the difference between mitosis and meiosis',
+          back: 'Mitosis produces two identical diploid cells for growth and repair, while meiosis produces four genetically different haploid gametes for reproduction.',
+          difficulty: 'hard'
+        },
+        {
+          id: '5',
+          front: 'What is osmosis?',
+          back: 'Osmosis is the movement of water molecules across a semi-permeable membrane from an area of low solute concentration to high solute concentration.',
+          difficulty: 'medium'
+        }
+      ]);
     }
-  ];
+  }, []);
 
   if (isCompleted) {
     return (
@@ -57,7 +67,7 @@ const FlashcardsPage = () => {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground mb-6">
-                Great job! You've reviewed all {sampleCards.length} flashcards in this deck.
+                Great job! You've reviewed all {cards.length} flashcards in this deck.
               </p>
               <div className="space-y-3">
                 <Link to="/dashboard">
@@ -82,10 +92,10 @@ const FlashcardsPage = () => {
 
   return (
     <div className="h-screen bg-gradient-to-br from-background to-purple-50/20 flex flex-col overflow-hidden">
-      <MobileHeader title="Biology Chapter 5" showBack />
+      <MobileHeader title="Your Flashcards" showBack />
       <div className="flex-1 overflow-hidden">
         <FlashcardViewer 
-          cards={sampleCards}
+          cards={cards}
           onComplete={() => setIsCompleted(true)}
         />
       </div>
