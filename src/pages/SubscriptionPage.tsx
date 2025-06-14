@@ -33,10 +33,10 @@ const SubscriptionPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
+    <div className="h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex flex-col">
       <MobileHeader title="Choose Your Plan" />
       
-      <div className="px-4 py-6 space-y-6">
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
         {/* Current Status */}
         {subscribed && (
           <Card className="border-0 shadow-sm bg-white/90 backdrop-blur-sm">

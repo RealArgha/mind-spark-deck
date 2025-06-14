@@ -10,11 +10,11 @@ const UploadPage = () => {
   const showAds = !subscribed && !trial_active;
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex flex-col overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex flex-col">
       <MobileHeader title="Upload Content" />
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-y-auto">
         {showAds && (
-          <div className="mb-4">
+          <div className="p-4 pb-0">
             <AdBanner slot="1111111111" className="text-center" />
           </div>
         )}
