@@ -12,6 +12,8 @@ import QuizPage from "./pages/QuizPage";
 import UploadPage from "./pages/UploadPage";
 import AuthPage from "./pages/AuthPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
+import CreateFlashcardsPage from "./pages/CreateFlashcardsPage";
+import CreateQuizPage from "./pages/CreateQuizPage";
 import NotFound from "./pages/NotFound";
 import MobileNavbar from "./components/MobileNavbar";
 import { useLocation } from "react-router-dom";
@@ -65,6 +67,16 @@ const AppContent = () => {
           <Route path="/upload" element={
             <ProtectedRoute>
               <UploadPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/create-flashcards" element={
+            <ProtectedRoute>
+              <CreateFlashcardsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/create-quiz" element={
+            <ProtectedRoute>
+              <CreateQuizPage />
             </ProtectedRoute>
           } />
           <Route path="/subscription" element={

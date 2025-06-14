@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, FileText, Mic, MicOff } from 'lucide-react';
+import { Upload, FileText, Mic, MicOff, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const UploadSection = () => {
   const [text, setText] = useState('');
@@ -40,30 +41,55 @@ const UploadSection = () => {
         title: "Recording started",
         description: "Speak your notes clearly.",
       });
-      // Start recording logic would go here
     } else {
       toast({
         title: "Recording stopped",
         description: "Processing your voice notes...",
       });
-      // Stop recording logic would go here
       setText(prev => prev + "\n[Voice recording processed]");
     }
   };
 
   const generateFlashcardsFromContent = (content: string) => {
-    // Enhanced flashcard generation with better question-answer pairs
     const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 20);
     const flashcards = [];
     
-    // Define patterns for different types of questions
     const questionPatterns = [
-      { pattern: /(.+) is (.+)/i, template: (match: RegExpMatchArray) => ({ q: `What is ${match[1]}?`, a: match[2].trim() }) },
-      { pattern: /(.+) are (.+)/i, template: (match: RegExpMatchArray) => ({ q: `What are ${match[1]}?`, a: match[2].trim() }) },
-      { pattern: /(.+) occurs (.+)/i, template: (match: RegExpMatchArray) => ({ q: `Where does ${match[1]} occur?`, a: match[2].trim() }) },
-      { pattern: /(.+) process (.+)/i, template: (match: RegExpMatchArray) => ({ q: `Describe the ${match[1]} process`, a: `The ${match[1]} process ${match[2].trim()}` }) },
-      { pattern: /(.+) contains (.+)/i, template: (match: RegExpMatchArray) => ({ q: `What does ${match[1]} contain?`, a: match[2].trim() }) },
-      { pattern: /(.+) produces (.+)/i, template: (match: RegExpMatchArray) => ({ q: `What does ${match[1]} produce?`, a: match[2].trim() }) },
+      { 
+        pattern: /(.+) is (.+)/i, 
+        template: (match: RegExpMatchArray) => ({ 
+          q: `What is ${match[1].trim()}?`, 
+          a: `${match[1].trim()} is ${match[2].trim()}` 
+        }) 
+      },
+      { 
+        pattern: /(.+) are (.+)/i, 
+        template: (match: RegExpMatchArray) => ({ 
+          q: `What are ${match[1].trim()}?`, 
+          a: `${match[1].trim()} are ${match[2].trim()}` 
+        }) 
+      },
+      { 
+        pattern: /(.+) occurs in (.+)/i, 
+        template: (match: RegExpMatchArray) => ({ 
+          q: `Where does ${match[1].trim()} occur?`, 
+          a: `${match[1].trim()} occurs in ${match[2].trim()}` 
+        }) 
+      },
+      { 
+        pattern: /(.+) contains (.+)/i, 
+        template: (match: RegExpMatchArray) => ({ 
+          q: `What does ${match[1].trim()} contain?`, 
+          a: `${match[1].trim()} contains ${match[2].trim()}` 
+        }) 
+      },
+      { 
+        pattern: /(.+) produces (.+)/i, 
+        template: (match: RegExpMatchArray) => ({ 
+          q: `What does ${match[1].trim()} produce?`, 
+          a: `${match[1].trim()} produces ${match[2].trim()}` 
+        }) 
+      }
     ];
 
     for (let i = 0; i < Math.min(sentences.length, 12); i++) {
@@ -72,7 +98,6 @@ const UploadSection = () => {
 
       let questionCreated = false;
 
-      // Try to match patterns
       for (const pattern of questionPatterns) {
         const match = sentence.match(pattern.pattern);
         if (match) {
@@ -88,10 +113,8 @@ const UploadSection = () => {
         }
       }
 
-      // If no pattern matched, create a general comprehension question
       if (!questionCreated && sentence.length > 40) {
-        const words = sentence.split(' ');
-        const keyWords = words.filter(word => 
+        const keyWords = sentence.split(' ').filter(word => 
           word.length > 4 && 
           !['that', 'this', 'with', 'from', 'they', 'have', 'been', 'will', 'would', 'could', 'should'].includes(word.toLowerCase())
         );
@@ -108,7 +131,6 @@ const UploadSection = () => {
       }
     }
 
-    // If we still don't have enough cards, create some basic ones
     if (flashcards.length < 3 && sentences.length > 0) {
       for (let i = 0; i < Math.min(3, sentences.length); i++) {
         const sentence = sentences[i].trim();
@@ -144,7 +166,6 @@ const UploadSection = () => {
       let contentToProcess = text;
       
       if (uploadedFile) {
-        // Enhanced PDF content simulation with more educational content
         contentToProcess += `\n\nExtracted from ${uploadedFile.name}:\n` +
           "Photosynthesis is the biological process by which plants convert light energy into chemical energy. " +
           "This process occurs in the chloroplasts of plant cells, specifically in structures called thylakoids. " +
@@ -157,7 +178,6 @@ const UploadSection = () => {
           "Osmosis is the movement of water across a semipermeable membrane from low to high solute concentration.";
       }
       
-      // Generate flashcards from content
       const generatedCards = generateFlashcardsFromContent(contentToProcess);
       
       if (generatedCards.length === 0) {
@@ -170,18 +190,21 @@ const UploadSection = () => {
         return;
       }
       
-      // Save to localStorage with timestamp for persistence
-      const flashcardData = {
+      // Save to new flashcard sets format
+      const newSet = {
+        id: `set-${Date.now()}`,
+        name: uploadedFile ? `From ${uploadedFile.name}` : 'Generated from Text',
         cards: generatedCards,
-        timestamp: Date.now(),
+        createdAt: Date.now(),
         source: uploadedFile ? `PDF: ${uploadedFile.name}` : 'Text input'
       };
       
+      // Get existing sets
+      const existingSets = JSON.parse(localStorage.getItem('flashcardSets') || '[]');
+      const updatedSets = [...existingSets, newSet];
+      
+      localStorage.setItem('flashcardSets', JSON.stringify(updatedSets));
       localStorage.setItem('generatedFlashcards', JSON.stringify(generatedCards));
-      localStorage.setItem('flashcardHistory', JSON.stringify([
-        ...JSON.parse(localStorage.getItem('flashcardHistory') || '[]'),
-        flashcardData
-      ]));
       
       setTimeout(() => {
         setIsProcessing(false);
@@ -189,10 +212,8 @@ const UploadSection = () => {
           title: "Flashcards generated!",
           description: `Created ${generatedCards.length} flashcards from your content.`,
         });
-        // Clear form
         setText('');
         setUploadedFile(null);
-        // Navigate to flashcards page
         navigate('/flashcards');
       }, 2000);
       
@@ -207,117 +228,123 @@ const UploadSection = () => {
   };
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-4 space-y-4 pb-4">
-        <div className="text-center mb-4">
-          <h1 className="text-2xl font-bold mb-2">Upload Your Study Material</h1>
+    <div className="p-4 space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-xl font-bold">Upload Study Material</h1>
           <p className="text-muted-foreground text-sm">
-            Upload PDFs, paste text, or record voice notes to generate AI-powered flashcards
+            Generate AI-powered flashcards from your content
           </p>
         </div>
+        <Link to="/create-flashcards">
+          <Button size="sm" variant="outline">
+            <Plus className="h-4 w-4 mr-2" />
+            Custom
+          </Button>
+        </Link>
+      </div>
 
-        <div className="grid gap-4">
-          {/* File Upload */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center text-lg">
-                <Upload className="h-5 w-5 mr-2" />
-                Upload PDF
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary transition-colors">
-                <FileText className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                {uploadedFile ? (
-                  <div>
-                    <p className="text-sm font-medium text-green-600 mb-2">
-                      ✓ {uploadedFile.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">File ready for processing</p>
-                  </div>
+      <div className="grid gap-4">
+        {/* File Upload */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-lg">
+              <Upload className="h-5 w-5 mr-2" />
+              Upload PDF
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary transition-colors">
+              <FileText className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+              {uploadedFile ? (
+                <div>
+                  <p className="text-sm font-medium text-green-600 mb-2">
+                    ✓ {uploadedFile.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">File ready for processing</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Drag and drop your PDF here, or click to browse
+                  </p>
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <label htmlFor="file-upload">
+                    <Button variant="outline" className="cursor-pointer" asChild>
+                      <span>Choose File</span>
+                    </Button>
+                  </label>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Voice Recording */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-lg">
+              <Mic className="h-5 w-5 mr-2" />
+              Voice Notes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center">
+              <Button
+                onClick={toggleRecording}
+                variant={isRecording ? "destructive" : "outline"}
+                size="lg"
+                className="mb-2"
+              >
+                {isRecording ? (
+                  <>
+                    <MicOff className="h-5 w-5 mr-2" />
+                    Stop Recording
+                  </>
                 ) : (
                   <>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Drag and drop your PDF here, or click to browse
-                    </p>
-                    <input
-                      type="file"
-                      accept=".pdf"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      id="file-upload"
-                    />
-                    <label htmlFor="file-upload">
-                      <Button variant="outline" className="cursor-pointer" asChild>
-                        <span>Choose File</span>
-                      </Button>
-                    </label>
+                    <Mic className="h-5 w-5 mr-2" />
+                    Start Recording
                   </>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Voice Recording */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center text-lg">
-                <Mic className="h-5 w-5 mr-2" />
-                Voice Notes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center">
-                <Button
-                  onClick={toggleRecording}
-                  variant={isRecording ? "destructive" : "outline"}
-                  size="lg"
-                  className="mb-2"
-                >
-                  {isRecording ? (
-                    <>
-                      <MicOff className="h-5 w-5 mr-2" />
-                      Stop Recording
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="h-5 w-5 mr-2" />
-                      Start Recording
-                    </>
-                  )}
-                </Button>
-                {isRecording && (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                    <span className="text-sm text-muted-foreground">Recording...</span>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Text Input */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Or Paste Your Text</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                placeholder="Paste your study material here..."
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                className="min-h-24 mb-4"
-              />
-              <Button 
-                onClick={generateFlashcards}
-                disabled={isProcessing}
-                className="w-full bg-gradient-to-r from-primary to-purple-600"
-              >
-                {isProcessing ? "Generating..." : "Generate Flashcards"}
               </Button>
-            </CardContent>
-          </Card>
-        </div>
+              {isRecording && (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                  <span className="text-sm text-muted-foreground">Recording...</span>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Text Input */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Or Paste Your Text</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Textarea
+              placeholder="Paste your study material here..."
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              className="min-h-24 mb-4"
+            />
+            <Button 
+              onClick={generateFlashcards}
+              disabled={isProcessing}
+              className="w-full bg-gradient-to-r from-primary to-purple-600"
+            >
+              {isProcessing ? "Generating..." : "Generate Flashcards"}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

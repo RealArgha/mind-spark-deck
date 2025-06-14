@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Home, Upload, Brain, CreditCard } from 'lucide-react';
+import { BookOpen, Home, Upload, Brain, CreditCard, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const MobileNavbar = () => {

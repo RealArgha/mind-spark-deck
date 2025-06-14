@@ -14,7 +14,7 @@ const UploadPage = () => {
       <MobileHeader title="Upload Content" />
       <div className="flex-1 overflow-y-auto">
         {showAds && (
-          <div className="p-4 pb-0">
+          <div className="px-4 pt-2">
             <AdBanner slot="1111111111" className="text-center" />
           </div>
         )}
