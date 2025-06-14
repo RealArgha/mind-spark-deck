@@ -84,47 +84,62 @@ const FlashcardViewer = ({ cards, onComplete }: FlashcardViewerProps) => {
         </div>
       </div>
 
-      {/* Flashcard - Fixed height container */}
-      <div className="relative flex-1 min-h-0" style={{ perspective: '1000px' }}>
-        <div className="h-full max-h-80">
-          <Card 
+      {/* Flashcard - Fixed height container that fills available space */}
+      <div className="relative flex-1 min-h-0">
+        <div 
+          className="h-full min-h-[300px] sm:min-h-[400px]"
+          style={{ perspective: '1000px' }}
+        >
+          <div
             className={`
-              h-full cursor-pointer transition-transform duration-500 transform-style-preserve-3d ${
-                isFlipped ? 'rotate-y-180' : ''
-              }
+              relative w-full h-full cursor-pointer transition-transform duration-700 ease-in-out
             `}
-            onClick={handleFlip}
             style={{
-              transformStyle: 'preserve-3d'
+              transformStyle: 'preserve-3d',
+              transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
             }}
+            onClick={handleFlip}
           >
             {/* Front */}
-            <CardContent className={`h-full flex items-center justify-center p-6 ${isFlipped ? 'hidden' : 'block'}`}>
-              <div className="text-center">
-                <p className="text-lg font-medium leading-relaxed">{currentCard.front}</p>
-                <p className="text-xs text-muted-foreground mt-3">Tap to reveal answer</p>
-              </div>
-            </CardContent>
+            <Card 
+              className="absolute inset-0 w-full h-full"
+              style={{ backfaceVisibility: 'hidden' }}
+            >
+              <CardContent className="h-full flex items-center justify-center p-6">
+                <div className="text-center">
+                  <p className="text-lg sm:text-xl font-medium leading-relaxed">{currentCard.front}</p>
+                  <p className="text-xs text-muted-foreground mt-4">Tap to reveal answer</p>
+                </div>
+              </CardContent>
+            </Card>
             
             {/* Back */}
-            <CardContent className={`h-full flex items-center justify-center p-6 bg-gradient-to-br from-primary/5 to-purple-600/5 ${!isFlipped ? 'hidden' : 'block'}`}>
-              <div className="text-center">
-                <p className="text-lg font-medium leading-relaxed text-primary">{currentCard.back}</p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    speakText(currentCard.back);
-                  }}
-                  className="mt-3"
-                >
-                  <Volume2 className="h-4 w-4 mr-2" />
-                  Listen
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            <Card 
+              className="absolute inset-0 w-full h-full bg-gradient-to-br from-primary/5 to-purple-600/5"
+              style={{ 
+                backfaceVisibility: 'hidden',
+                transform: 'rotateY(180deg)'
+              }}
+            >
+              <CardContent className="h-full flex items-center justify-center p-6">
+                <div className="text-center">
+                  <p className="text-lg sm:text-xl font-medium leading-relaxed text-primary">{currentCard.back}</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      speakText(currentCard.back);
+                    }}
+                    className="mt-4"
+                  >
+                    <Volume2 className="h-4 w-4 mr-2" />
+                    Listen
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 
