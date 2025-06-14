@@ -129,17 +129,22 @@ const OnboardingScreen = () => {
 
       {/* Main Card Container with 3D Perspective */}
       <div 
-        className="flex-1 px-6 flex items-center justify-center perspective-1000"
+        className="flex-1 px-6 flex items-center justify-center"
+        style={{ perspective: '1000px' }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
         <div className="relative w-full max-w-sm h-96">
           <Card className={`
             absolute inset-0 border-0 shadow-2xl bg-white/90 backdrop-blur-sm 
-            transform-style-preserve-3d transition-all duration-500 ease-out
-            ${isTransitioning ? 'scale-95 rotate-y-12' : 'scale-100 rotate-y-0'}
+            transition-all duration-500 ease-out
+            ${isTransitioning ? 'scale-95' : 'scale-100'}
             hover:scale-105
-          `}>
+          `}
+          style={{
+            transformStyle: 'preserve-3d',
+            transform: isTransitioning ? 'rotateY(12deg)' : 'rotateY(0deg)'
+          }}>
             <CardContent className="p-8 h-full flex flex-col items-center justify-center text-center space-y-6">
               {/* Icon */}
               <div className={`w-20 h-20 rounded-full bg-gradient-to-r ${currentCardData.gradient} flex items-center justify-center shadow-lg transform transition-transform duration-300 ${isTransitioning ? 'scale-90' : 'scale-100'}`}>
@@ -193,7 +198,7 @@ const OnboardingScreen = () => {
             isLastCard 
               ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700' 
               : 'bg-indigo-600 hover:bg-indigo-700'
-          } text-white px-4`}
+          } text-white px-3 py-1 text-sm`}
         >
           {isLastCard ? 'Start Learning' : 'Next'}
           <ArrowRight className="h-4 w-4 ml-1" />
@@ -208,21 +213,6 @@ const OnboardingScreen = () => {
           </p>
         </div>
       )}
-
-      <style jsx>{`
-        .perspective-1000 {
-          perspective: 1000px;
-        }
-        .transform-style-preserve-3d {
-          transform-style: preserve-3d;
-        }
-        .rotate-y-12 {
-          transform: rotateY(12deg);
-        }
-        .rotate-y-0 {
-          transform: rotateY(0deg);
-        }
-      `}</style>
     </div>
   );
 };
