@@ -62,16 +62,16 @@ const FlashcardViewer = ({ cards, onComplete }: FlashcardViewerProps) => {
   if (!currentCard) return null;
 
   return (
-    <div className="flex flex-col h-full max-w-2xl mx-auto p-4 space-y-4">
+    <div className="h-full flex flex-col max-w-2xl mx-auto p-4">
       {/* Show ad before flashcard for trial users */}
       {showAds && currentIndex === 0 && (
-        <div className="mb-4">
+        <div className="flex-shrink-0 mb-4">
           <AdBanner slot="1234567890" className="text-center" />
         </div>
       )}
 
       {/* Progress Bar */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 mb-4">
         <div className="flex justify-between text-sm text-muted-foreground mb-2">
           <span>Card {currentIndex + 1} of {cards.length}</span>
           <span>{Math.round(progress)}% Complete</span>
@@ -84,67 +84,62 @@ const FlashcardViewer = ({ cards, onComplete }: FlashcardViewerProps) => {
         </div>
       </div>
 
-      {/* Flashcard - Fixed height container that fills available space */}
-      <div className="relative flex-1 min-h-0">
-        <div 
-          className="h-full min-h-[300px] sm:min-h-[400px]"
-          style={{ perspective: '1000px' }}
+      {/* Flashcard - Takes remaining space */}
+      <div className="flex-1 min-h-0 mb-4" style={{ perspective: '1000px' }}>
+        <div
+          className={`
+            relative w-full h-full cursor-pointer transition-transform duration-700 ease-in-out
+          `}
+          style={{
+            transformStyle: 'preserve-3d',
+            transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+          }}
+          onClick={handleFlip}
         >
-          <div
-            className={`
-              relative w-full h-full cursor-pointer transition-transform duration-700 ease-in-out
-            `}
-            style={{
-              transformStyle: 'preserve-3d',
-              transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
-            }}
-            onClick={handleFlip}
+          {/* Front */}
+          <Card 
+            className="absolute inset-0 w-full h-full"
+            style={{ backfaceVisibility: 'hidden' }}
           >
-            {/* Front */}
-            <Card 
-              className="absolute inset-0 w-full h-full"
-              style={{ backfaceVisibility: 'hidden' }}
-            >
-              <CardContent className="h-full flex items-center justify-center p-6">
-                <div className="text-center">
-                  <p className="text-lg sm:text-xl font-medium leading-relaxed">{currentCard.front}</p>
-                  <p className="text-xs text-muted-foreground mt-4">Tap to reveal answer</p>
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Back */}
-            <Card 
-              className="absolute inset-0 w-full h-full bg-gradient-to-br from-primary/5 to-purple-600/5"
-              style={{ 
-                backfaceVisibility: 'hidden',
-                transform: 'rotateY(180deg)'
-              }}
-            >
-              <CardContent className="h-full flex items-center justify-center p-6">
-                <div className="text-center">
-                  <p className="text-lg sm:text-xl font-medium leading-relaxed text-primary">{currentCard.back}</p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      speakText(currentCard.back);
-                    }}
-                    className="mt-4"
-                  >
-                    <Volume2 className="h-4 w-4 mr-2" />
-                    Listen
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+            <CardContent className="h-full flex items-center justify-center p-6">
+              <div className="text-center">
+                <p className="text-lg sm:text-xl font-medium leading-relaxed">{currentCard.front}</p>
+                <p className="text-xs text-muted-foreground mt-4">Tap to reveal answer</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Back */}
+          <Card 
+            className="absolute inset-0 w-full h-full bg-gradient-to-br from-primary/5 to-purple-600/5"
+            style={{ 
+              backfaceVisibility: 'hidden',
+              transform: 'rotateY(180deg)'
+            }}
+          >
+            <CardContent className="h-full flex items-center justify-center p-6">
+              <div className="text-center">
+                <p className="text-lg sm:text-xl font-medium leading-relaxed text-primary">{currentCard.back}</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    speakText(currentCard.back);
+                  }}
+                  className="mt-4"
+                >
+                  <Volume2 className="h-4 w-4 mr-2" />
+                  Listen
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
       {/* Controls */}
-      <div className="flex items-center justify-between flex-shrink-0">
+      <div className="flex items-center justify-between flex-shrink-0 mb-3">
         <Button 
           variant="outline" 
           onClick={handlePrevious}
@@ -172,7 +167,7 @@ const FlashcardViewer = ({ cards, onComplete }: FlashcardViewerProps) => {
 
       {/* Difficulty Rating (when flipped) - Compact */}
       {isFlipped && (
-        <div className="p-3 bg-secondary/50 rounded-lg flex-shrink-0">
+        <div className="p-3 bg-secondary/50 rounded-lg flex-shrink-0 mb-3">
           <p className="text-xs text-muted-foreground mb-2">How difficult was this card?</p>
           <div className="flex space-x-2">
             <Button variant="outline" size="sm" className="text-green-600 text-xs px-2 py-1">Easy</Button>
@@ -184,7 +179,7 @@ const FlashcardViewer = ({ cards, onComplete }: FlashcardViewerProps) => {
 
       {/* Show ad after completing flashcard for trial users */}
       {showAds && currentIndex === cards.length - 1 && isFlipped && (
-        <div className="mt-4">
+        <div className="flex-shrink-0">
           <AdBanner slot="0987654321" className="text-center" />
         </div>
       )}
