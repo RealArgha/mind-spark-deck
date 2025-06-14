@@ -12,50 +12,62 @@ const FlashcardsPage = () => {
   const [cards, setCards] = useState([]);
 
   useEffect(() => {
-    // Try to load generated flashcards from localStorage
+    // Load generated flashcards from localStorage with better fallback
     const storedCards = localStorage.getItem('generatedFlashcards');
     if (storedCards) {
-      setCards(JSON.parse(storedCards));
-    } else {
-      // Fallback to sample cards
-      setCards([
-        {
-          id: '1',
-          front: 'What is the powerhouse of the cell?',
-          back: 'The mitochondria is the powerhouse of the cell, responsible for producing ATP through cellular respiration.',
-          difficulty: 'easy'
-        },
-        {
-          id: '2',
-          front: 'Define photosynthesis',
-          back: 'Photosynthesis is the process by which plants convert light energy, carbon dioxide, and water into glucose and oxygen.',
-          difficulty: 'medium'
-        },
-        {
-          id: '3',
-          front: 'What is DNA replication?',
-          back: 'DNA replication is the process by which DNA makes a copy of itself during cell division, ensuring genetic information is passed to daughter cells.',
-          difficulty: 'hard'
-        },
-        {
-          id: '4',
-          front: 'Explain the difference between mitosis and meiosis',
-          back: 'Mitosis produces two identical diploid cells for growth and repair, while meiosis produces four genetically different haploid gametes for reproduction.',
-          difficulty: 'hard'
-        },
-        {
-          id: '5',
-          front: 'What is osmosis?',
-          back: 'Osmosis is the movement of water molecules across a semi-permeable membrane from an area of low solute concentration to high solute concentration.',
-          difficulty: 'medium'
+      try {
+        const parsedCards = JSON.parse(storedCards);
+        if (Array.isArray(parsedCards) && parsedCards.length > 0) {
+          setCards(parsedCards);
+          return;
         }
-      ]);
+      } catch (error) {
+        console.error('Error parsing stored flashcards:', error);
+      }
     }
+    
+    // Fallback to sample cards
+    const sampleCards = [
+      {
+        id: '1',
+        front: 'What is the powerhouse of the cell?',
+        back: 'The mitochondria is the powerhouse of the cell, responsible for producing ATP through cellular respiration.',
+        difficulty: 'easy'
+      },
+      {
+        id: '2',
+        front: 'Define photosynthesis',
+        back: 'Photosynthesis is the process by which plants convert light energy, carbon dioxide, and water into glucose and oxygen.',
+        difficulty: 'medium'
+      },
+      {
+        id: '3',
+        front: 'What is DNA replication?',
+        back: 'DNA replication is the process by which DNA makes a copy of itself during cell division, ensuring genetic information is passed to daughter cells.',
+        difficulty: 'hard'
+      },
+      {
+        id: '4',
+        front: 'Explain the difference between mitosis and meiosis',
+        back: 'Mitosis produces two identical diploid cells for growth and repair, while meiosis produces four genetically different haploid gametes for reproduction.',
+        difficulty: 'hard'
+      },
+      {
+        id: '5',
+        front: 'What is osmosis?',
+        back: 'Osmosis is the movement of water molecules across a semi-permeable membrane from an area of low solute concentration to high solute concentration.',
+        difficulty: 'medium'
+      }
+    ];
+    
+    setCards(sampleCards);
+    // Store sample cards for consistency
+    localStorage.setItem('generatedFlashcards', JSON.stringify(sampleCards));
   }, []);
 
   if (isCompleted) {
     return (
-      <div className="h-screen bg-gradient-to-br from-background to-purple-50/20 flex flex-col">
+      <div className="h-full bg-gradient-to-br from-background to-purple-50/20 flex flex-col">
         <MobileHeader title="Study Complete" showBack />
         <div className="flex-1 flex items-center justify-center p-4">
           <Card className="w-full max-w-md text-center">
@@ -91,7 +103,7 @@ const FlashcardsPage = () => {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-background to-purple-50/20 flex flex-col overflow-hidden">
+    <div className="h-full bg-gradient-to-br from-background to-purple-50/20 flex flex-col overflow-hidden">
       <MobileHeader title="Your Flashcards" showBack />
       <div className="flex-1 overflow-hidden">
         <FlashcardViewer 

@@ -43,7 +43,7 @@ const AppContent = () => {
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 to-indigo-50 overflow-hidden">
-      <div className="flex-1 overflow-hidden">
+      <div className={`flex-1 overflow-hidden ${showMobileNav ? 'pb-20' : ''}`}>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<AuthPage />} />

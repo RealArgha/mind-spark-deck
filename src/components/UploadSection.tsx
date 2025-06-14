@@ -170,8 +170,18 @@ const UploadSection = () => {
         return;
       }
       
-      // Store in localStorage for now (in real app, this would be saved to database)
+      // Save to localStorage with timestamp for persistence
+      const flashcardData = {
+        cards: generatedCards,
+        timestamp: Date.now(),
+        source: uploadedFile ? `PDF: ${uploadedFile.name}` : 'Text input'
+      };
+      
       localStorage.setItem('generatedFlashcards', JSON.stringify(generatedCards));
+      localStorage.setItem('flashcardHistory', JSON.stringify([
+        ...JSON.parse(localStorage.getItem('flashcardHistory') || '[]'),
+        flashcardData
+      ]));
       
       setTimeout(() => {
         setIsProcessing(false);
@@ -179,6 +189,9 @@ const UploadSection = () => {
           title: "Flashcards generated!",
           description: `Created ${generatedCards.length} flashcards from your content.`,
         });
+        // Clear form
+        setText('');
+        setUploadedFile(null);
         // Navigate to flashcards page
         navigate('/flashcards');
       }, 2000);
@@ -195,8 +208,8 @@ const UploadSection = () => {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="p-4 space-y-6 pb-20">
-        <div className="text-center mb-6">
+      <div className="p-4 space-y-4 pb-4">
+        <div className="text-center mb-4">
           <h1 className="text-2xl font-bold mb-2">Upload Your Study Material</h1>
           <p className="text-muted-foreground text-sm">
             Upload PDFs, paste text, or record voice notes to generate AI-powered flashcards
@@ -213,8 +226,8 @@ const UploadSection = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors">
-                <FileText className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+              <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary transition-colors">
+                <FileText className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                 {uploadedFile ? (
                   <div>
                     <p className="text-sm font-medium text-green-600 mb-2">
@@ -224,7 +237,7 @@ const UploadSection = () => {
                   </div>
                 ) : (
                   <>
-                    <p className="text-sm text-muted-foreground mb-3">
+                    <p className="text-sm text-muted-foreground mb-2">
                       Drag and drop your PDF here, or click to browse
                     </p>
                     <input
@@ -259,7 +272,7 @@ const UploadSection = () => {
                   onClick={toggleRecording}
                   variant={isRecording ? "destructive" : "outline"}
                   size="lg"
-                  className="mb-3"
+                  className="mb-2"
                 >
                   {isRecording ? (
                     <>
@@ -293,7 +306,7 @@ const UploadSection = () => {
                 placeholder="Paste your study material here..."
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                className="min-h-32 mb-4"
+                className="min-h-24 mb-4"
               />
               <Button 
                 onClick={generateFlashcards}

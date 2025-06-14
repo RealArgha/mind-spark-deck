@@ -33,14 +33,14 @@ const SubscriptionPage = () => {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex flex-col">
+    <div className="h-full bg-gradient-to-br from-slate-50 to-indigo-50 flex flex-col">
       <MobileHeader title="Choose Your Plan" />
       
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {/* Current Status */}
         {subscribed && (
           <Card className="border-0 shadow-sm bg-white/90 backdrop-blur-sm">
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="text-lg text-slate-800 flex items-center">
                 <Star className="h-5 w-5 text-yellow-500 mr-2" />
                 Your Current Plan
@@ -83,12 +83,12 @@ const SubscriptionPage = () => {
 
         {/* Plan Selection */}
         <div className="space-y-4">
-          <div className="text-center mb-6">
+          <div className="text-center mb-4">
             <h2 className="text-2xl font-bold text-slate-800 mb-2">Unlock Premium Features</h2>
             <p className="text-slate-600">Choose the plan that works best for you</p>
           </div>
           
-          <div className="grid gap-6">
+          <div className="grid gap-4">
             <SubscriptionCard planType="lifetime" currentTier={subscription_tier} />
             <SubscriptionCard planType="monthly" currentTier={subscription_tier} />
           </div>
@@ -96,7 +96,7 @@ const SubscriptionPage = () => {
 
         {/* Features */}
         <Card className="border-0 shadow-sm bg-white/90 backdrop-blur-sm">
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle className="text-lg text-slate-800">What You Get</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -122,7 +122,7 @@ const SubscriptionPage = () => {
         </Card>
 
         {/* Money Back Guarantee */}
-        <Card className="border-0 shadow-sm bg-gradient-to-r from-green-50 to-emerald-50">
+        <Card className="border-0 shadow-sm bg-gradient-to-r from-green-50 to-emerald-50 mb-4">
           <CardContent className="p-4 text-center">
             <div className="text-green-700 font-medium mb-1">30-Day Money Back Guarantee</div>
             <div className="text-sm text-green-600">Try risk-free. Cancel anytime.</div>
