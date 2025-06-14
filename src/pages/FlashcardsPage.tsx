@@ -152,7 +152,7 @@ const FlashcardsPage = () => {
     return (
       <div className="h-screen bg-gradient-to-br from-background to-purple-50/20 flex flex-col">
         <MobileHeader title="Your Flashcard Sets" showBack />
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto px-4 pt-2 pb-4 space-y-4">
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-lg font-semibold">Choose a flashcard set</h2>
