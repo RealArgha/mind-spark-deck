@@ -10,7 +10,7 @@ const corsHeaders = {
 
 const pricingPlans = {
   monthly: { price: 499, name: "Monthly Subscription" }, // $4.99
-  lifetime: { price: 4000, name: "Lifetime Access" }     // $40.00
+  lifetime: { price: 2500, name: "Lifetime Access" }     // $25.00 <- Changed from $40.00
 };
 
 serve(async (req) => {
@@ -62,7 +62,7 @@ serve(async (req) => {
       sessionConfig.line_items[0].price_data.recurring = { interval: "month" };
       sessionConfig.mode = "subscription";
     } else {
-      sessionConfig.mode = "payment";
+      sessionConfig.mode = "payment"; // One-time payment for lifetime
     }
 
     const session = await stripe.checkout.sessions.create(sessionConfig);

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import FlashcardViewer from '@/components/FlashcardViewer';
 import { Button } from '@/components/ui/button';
@@ -6,12 +5,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy, Plus, FileText, Brain, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MobileHeader from '@/components/MobileHeader';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input'; 
+import { useToast } from '@/hooks/use-toast'; // For notifications
 
 const FlashcardsPage = () => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [cards, setCards] = useState([]);
   const [flashcardSets, setFlashcardSets] = useState([]);
   const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renamingSetId, setRenamingSetId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const { toast } = useToast();
 
   useEffect(() => {
     // Load all flashcard sets from localStorage
@@ -101,6 +107,28 @@ const FlashcardsPage = () => {
     setSelectedSetId(null);
     setCards([]);
     setIsCompleted(false);
+  };
+
+  const openRenameDialog = (setId: string, currentName: string) => {
+    setRenamingSetId(setId);
+    setRenameValue(currentName);
+    setRenameDialogOpen(true);
+  };
+
+  const handleRenameConfirm = () => {
+    if (renameValue.trim().length === 0) {
+      toast({ title: "Name cannot be empty", variant: "destructive" });
+      return;
+    }
+    const updatedSets = flashcardSets.map((set) =>
+      set.id === renamingSetId ? { ...set, name: renameValue } : set
+    );
+    setFlashcardSets(updatedSets);
+    localStorage.setItem('flashcardSets', JSON.stringify(updatedSets));
+    setRenameDialogOpen(false);
+    setRenamingSetId(null);
+    setRenameValue('');
+    toast({ title: "Set renamed!" });
   };
 
   if (isCompleted) {
@@ -193,10 +221,10 @@ const FlashcardsPage = () => {
               {flashcardSets.map((set) => (
                 <Card 
                   key={set.id} 
-                  className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-primary/20 hover:border-l-primary" 
+                  className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-primary/20 hover:border-l-primary relative" 
                   onClick={() => handleSetSelect(set.id)}
                 >
-                  <CardContent className="p-4">
+                  <CardContent className="p-4 flex flex-col">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-2">
@@ -217,9 +245,19 @@ const FlashcardsPage = () => {
                           Source: {set.source || 'Unknown'}
                         </div>
                       </div>
-                      <div className="ml-4">
+                      <div className="ml-4 flex flex-col items-center gap-2">
                         <Button size="sm" variant="ghost" className="text-primary">
                           Study →
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          type="button"
+                          onClick={e => { e.stopPropagation(); openRenameDialog(set.id, set.name); }}
+                          title="Rename this set"
+                          className="text-muted-foreground"
+                        >
+                          ✏️
                         </Button>
                       </div>
                     </div>
@@ -228,6 +266,27 @@ const FlashcardsPage = () => {
               ))}
             </div>
           )}
+
+          {/* ------- Rename Dialog ------- */}
+          <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Rename Set</DialogTitle>
+              </DialogHeader>
+              <Input 
+                value={renameValue} 
+                onChange={e => setRenameValue(e.target.value)} 
+                placeholder="Enter new set name"
+                className="mb-4"
+                onKeyDown={e => { if (e.key === "Enter") handleRenameConfirm(); }}
+                autoFocus
+              />
+              <DialogFooter>
+                <Button onClick={handleRenameConfirm}>Save</Button>
+                <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>Cancel</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     );

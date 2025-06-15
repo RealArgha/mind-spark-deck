@@ -25,11 +25,11 @@ const plans = {
   },
   lifetime: {
     name: 'Lifetime Access',
-    price: 40,
+    price: 25, // <- Changed to $25
     icon: Infinity,
     features: ['Everything in Monthly', 'One-time payment', 'Lifetime updates', 'Priority support'],
     color: 'from-purple-500 to-pink-600',
-    badge: '$40 once',
+    badge: '$25 once', // <- Changed badge text
     popular: true
   }
 };
