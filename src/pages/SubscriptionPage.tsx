@@ -113,7 +113,7 @@ const SubscriptionPage = () => {
                 <CardTitle>Lifetime Access</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-2">
-                <span className="text-xl font-semibold text-purple-600">$25 (one-time)</span>
+                <span className="text-xl font-semibold text-purple-600">$24.99 (one-time)</span>
                 <Button
                   className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium py-3 mt-2"
                   onClick={() => handleCheckout('lifetime')}
@@ -129,7 +129,7 @@ const SubscriptionPage = () => {
                 <CardTitle>Monthly Plan</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-2">
-                <span className="text-xl font-semibold text-blue-600">$4.99 / month</span>
+                <span className="text-xl font-semibold text-blue-600">$1.99 / month</span>
                 <Button
                   className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium py-3 mt-2"
                   onClick={() => handleCheckout('monthly')}

@@ -9,8 +9,8 @@ const corsHeaders = {
 };
 
 const pricingPlans = {
-  monthly: { price: 499, name: "Monthly Subscription" }, // $4.99
-  lifetime: { price: 2500, name: "Lifetime Access" }     // $25.00 <- Changed from $40.00
+  monthly: { price: 199, name: "Monthly Subscription" }, // $1.99
+  lifetime: { price: 2499, name: "Lifetime Access" }     // $24.99
 };
 
 serve(async (req) => {

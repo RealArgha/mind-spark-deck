@@ -16,20 +16,30 @@ interface SubscriptionCardProps {
 const plans = {
   monthly: {
     name: 'Monthly Plan',
-    price: 4.99,
+    price: 1.99, // Changed price to $1.99
     icon: Crown,
-    features: ['Unlimited flashcards', 'AI-powered generation', 'Spaced repetition', 'Progress tracking'],
+    features: [
+      'Unlimited flashcards',
+      'AI-powered generation',
+      'Spaced repetition',
+      'Progress tracking'
+    ],
     color: 'from-blue-500 to-indigo-600',
-    badge: '$4.99/month',
+    badge: '$1.99/month', // Updated badge
     popular: false
   },
   lifetime: {
     name: 'Lifetime Access',
-    price: 25, // <- Changed to $25
+    price: 24.99, // Changed price to $24.99
     icon: Infinity,
-    features: ['Everything in Monthly', 'One-time payment', 'Lifetime updates', 'Priority support'],
+    features: [
+      'Everything in Monthly',
+      'One-time payment',
+      'Lifetime updates',
+      'Priority support'
+    ],
     color: 'from-purple-500 to-pink-600',
-    badge: '$25 once', // <- Changed badge text
+    badge: '$24.99 once', // Updated badge text
     popular: true
   }
 };
