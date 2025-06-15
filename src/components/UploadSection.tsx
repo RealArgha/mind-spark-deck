@@ -9,6 +9,10 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useDailyGenerationLimit } from "@/hooks/useDailyGenerationLimit";
+import FileUploadSection from './UploadSection/FileUploadSection';
+import VoiceRecordingSection from './UploadSection/VoiceRecordingSection';
+import TextInputSection from './UploadSection/TextInputSection';
+import AIGenerationButtons from './UploadSection/AIGenerationButtons';
 
 const UploadSection = () => {
   const [text, setText] = useState('');
@@ -398,145 +402,32 @@ const UploadSection = () => {
 
       <div className="grid gap-4">
         {/* File Upload */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Upload className="h-5 w-5 mr-2" />
-              Upload PDF
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary transition-colors">
-              <FileText className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-              {uploadedFile ? (
-                <div>
-                  <p className="text-sm font-medium text-green-600 mb-2">
-                    ✓ {uploadedFile.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">File ready for processing</p>
-                </div>
-              ) : (
-                <>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Drag and drop your PDF here, or click to browse
-                  </p>
-                  <input
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="file-upload"
-                  />
-                  <label htmlFor="file-upload">
-                    <Button variant="outline" className="cursor-pointer" asChild>
-                      <span>Choose File</span>
-                    </Button>
-                  </label>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <FileUploadSection uploadedFile={uploadedFile} handleFileUpload={handleFileUpload} />
 
         {/* Voice Recording */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Mic className="h-5 w-5 mr-2" />
-              Voice Notes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center">
-              <Button
-                onClick={toggleRecording}
-                variant={isRecording ? "destructive" : "outline"}
-                size="lg"
-                className="mb-2"
-              >
-                {isRecording ? (
-                  <>
-                    <MicOff className="h-5 w-5 mr-2" />
-                    Stop Recording
-                  </>
-                ) : (
-                  <>
-                    <Mic className="h-5 w-5 mr-2" />
-                    Start Recording
-                  </>
-                )}
-              </Button>
-              {isRecording && (
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                  <span className="text-sm text-muted-foreground">Recording...</span>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <VoiceRecordingSection isRecording={isRecording} toggleRecording={toggleRecording} />
 
-        {/* Text Input */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Or Paste Your Text</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Textarea
-              placeholder="Paste your study material here..."
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              className="min-h-24 mb-4"
-            />
+        {/* Text Input and AI Generation */}
+        <TextInputSection text={text} setText={setText} isProcessing={isProcessing}>
+          <AIGenerationButtons
+            isProcessing={isProcessing}
+            unlimited={unlimited}
+            canGenerate={canGenerate}
+            remaining={remaining}
+            maxPerDay={maxPerDay}
+            maxPerSession={maxPerSession}
+            generateWithAI={generateWithAI}
+          />
 
-            {/* --- AI Generation Buttons with Free Usage Limit --- */}
-            <div className="grid grid-cols-2 gap-2 mb-2">
-              <Button 
-                onClick={() => generateWithAI('flashcards')}
-                disabled={isProcessing || (!unlimited && !canGenerate("flashcards"))}
-                className="bg-gradient-to-r from-purple-600 to-pink-600"
-              >
-                <Sparkles className="h-4 w-4 mr-2" />
-                {isProcessing ? "Generating..." : "AI Flashcards"}
-              </Button>
-              <Button 
-                onClick={() => generateWithAI('quiz')}
-                disabled={isProcessing || (!unlimited && !canGenerate("quiz"))}
-                variant="outline"
-                className="border-purple-300 text-purple-700 hover:bg-purple-50"
-              >
-                <Sparkles className="h-4 w-4 mr-2" />
-                {isProcessing ? "Generating..." : "AI Quiz"}
-              </Button>
-            </div>
-
-            {/* Free user AI generation session/card limit info */}
-            {(!unlimited) && (
-              <div className="text-xs text-muted-foreground mb-2 text-right">
-                <div>
-                  {`Flashcards generations left: `}
-                  <span className="font-medium text-primary">{remaining("flashcards")} / {maxPerDay} sessions</span>
-                  <span className="ml-1 text-[11px]">(5 cards/session, up to 10/day)</span>
-                </div>
-                <div>
-                  {`Quiz generations left: `}
-                  <span className="font-medium text-primary">{remaining("quiz")} / {maxPerDay} sessions</span>
-                  <span className="ml-1 text-[11px]">(5 questions/session, up to 10/day)</span>
-                </div>
-              </div>
-            )}
-
-            {/* Basic/legacy generation stays the same */}
-            <Button 
-              onClick={generateFlashcards}
-              disabled={isProcessing}
-              variant="outline"
-              className="w-full"
-            >
-              {isProcessing ? "Generating..." : "Basic Generation"}
-            </Button>
-          </CardContent>
-        </Card>
+          <Button 
+            onClick={generateFlashcards}
+            disabled={isProcessing}
+            variant="outline"
+            className="w-full"
+          >
+            {isProcessing ? "Generating..." : "Basic Generation"}
+          </Button>
+        </TextInputSection>
       </div>
     </div>
   );
