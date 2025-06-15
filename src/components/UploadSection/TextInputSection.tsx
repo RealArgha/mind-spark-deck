@@ -7,6 +7,7 @@ interface TextInputSectionProps {
   text: string;
   setText: (t: string) => void;
   isProcessing: boolean;
+  children?: React.ReactNode; // <-- Added to accept children
 }
 
 const TextInputSection: React.FC<TextInputSectionProps> = ({
@@ -33,3 +34,4 @@ const TextInputSection: React.FC<TextInputSectionProps> = ({
 );
 
 export default TextInputSection;
+
