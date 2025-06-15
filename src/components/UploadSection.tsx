@@ -18,8 +18,7 @@ const UploadSection = () => {
   const navigate = useNavigate();
   const { subscribed, trial_active } = useSubscription();
 
-  // --- Free user AI generation count tracking ---
-  // Tracks how many times user generated AI flashcards today (localStorage, resets daily)
+  // --- Free user AI generation count tracking: Limit to 2 times per day, 5 cards per generation ---
   const [freeGenLeft, setFreeGenLeft] = useState(2);
 
   useEffect(() => {
@@ -27,7 +26,6 @@ const UploadSection = () => {
       setFreeGenLeft(Infinity);
       return;
     }
-    // Key is updated daily to reset count
     const todayKey = `aiGenUsed_${new Date().toISOString().slice(0,10)}`;
     const used = parseInt(localStorage.getItem(todayKey) || "0", 10);
     setFreeGenLeft(Math.max(0, 2 - used));
@@ -79,25 +77,33 @@ const UploadSection = () => {
   const generateWithAI = async (type: 'flashcards' | 'quiz') => {
     const hasContent = text.trim() || uploadedFile;
 
-    // --- Free user: enforce generation limits only for AI Flashcards ---
+    // Enforce free user's daily session/card limits
     if (!subscribed && !trial_active && type === "flashcards") {
       if (freeGenLeft <= 0) {
         toast({
-          title: "Limit reached",
-          description: "You have reached the free AI generation limit for today. Upgrade your plan for unlimited AI flashcards.",
+          title: "Free AI generation limit reached",
+          description: "You've reached the maximum of 2 AI flashcard generations (10 cards) for today. Upgrade to unlock unlimited AI cards.",
           variant: "destructive",
         });
         return;
       }
     }
 
+    if (!hasContent) {
+      toast({
+        title: "No content to process",
+        description: "Please enter some text, upload a file, or record audio first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
-    
+
     try {
       let contentToProcess = text;
-      
+
       if (uploadedFile) {
-        // For demo purposes, using sample content when PDF is uploaded
         contentToProcess += `\n\nContent from ${uploadedFile.name}:\n` +
           "Photosynthesis is the biological process by which plants convert light energy into chemical energy. " +
           "This process occurs in the chloroplasts of plant cells, specifically in structures called thylakoids. " +
@@ -110,7 +116,7 @@ const UploadSection = () => {
           "Osmosis is the movement of water across a semipermeable membrane from low to high solute concentration.";
       }
 
-      // --- Set correct count for flashcards/quiz ---
+      // --- Set card count: flashcards = 5 for free users, 12 for paid. Quiz = 10 for all.
       let count = 10;
       if (type === "flashcards") {
         count = (subscribed || trial_active) ? 12 : 5;
@@ -124,16 +130,9 @@ const UploadSection = () => {
         }
       });
 
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      if (!data.success) {
-        throw new Error(data.error || 'AI generation failed');
-      }
-
+      if (error) throw new Error(error.message);
+      if (!data.success) throw new Error(data.error || 'AI generation failed');
       const generatedItems = data.data;
-      
       if (!generatedItems || generatedItems.length === 0) {
         toast({
           title: "Generation failed",
@@ -157,23 +156,24 @@ const UploadSection = () => {
           createdAt: Date.now(),
           source: uploadedFile ? `AI from PDF: ${uploadedFile.name}` : 'AI from text input'
         };
-        
+
         const existingSets = JSON.parse(localStorage.getItem('flashcardSets') || '[]');
         const updatedSets = [...existingSets, newSet];
         localStorage.setItem('flashcardSets', JSON.stringify(updatedSets));
-        
+
         toast({
           title: "AI Flashcards generated!",
           description: `Created ${generatedItems.length} flashcards using AI.`,
         });
-        
+
+        // -- Record free usage
         if (!subscribed && !trial_active) {
           recordFreeGen();
         }
-        
+
         navigate('/flashcards');
       } else {
-        // Save quiz
+        // Save quiz (unlimited for all users)
         const newQuiz = {
           id: `ai-quiz-${Date.now()}`,
           name: uploadedFile ? `AI Quiz: ${uploadedFile.name}` : 'AI Generated Quiz',
@@ -187,22 +187,22 @@ const UploadSection = () => {
           createdAt: Date.now(),
           source: uploadedFile ? `AI from PDF: ${uploadedFile.name}` : 'AI from text input'
         };
-        
+
         const existingQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
         const updatedQuizzes = [...existingQuizzes, newQuiz];
         localStorage.setItem('customQuizzes', JSON.stringify(updatedQuizzes));
-        
+
         toast({
           title: "AI Quiz generated!",
           description: `Created ${generatedItems.length} questions using AI.`,
         });
-        
+
         navigate('/quiz');
       }
 
       setText('');
       setUploadedFile(null);
-      
+
     } catch (error) {
       console.error('AI generation error:', error);
       toast({
@@ -499,7 +499,7 @@ const UploadSection = () => {
               onChange={(e) => setText(e.target.value)}
               className="min-h-24 mb-4"
             />
-            
+
             {/* --- AI Generation Buttons with Free Usage Limit --- */}
             <div className="grid grid-cols-2 gap-2 mb-2">
               <Button 
@@ -520,18 +520,24 @@ const UploadSection = () => {
                 {isProcessing ? "Generating..." : "AI Quiz"}
               </Button>
             </div>
-            
-            {/* Free user limit info */}
+
+            {/* Free user AI generation session/card limit info */}
             {(!subscribed && !trial_active) && (
               <div className="text-xs text-muted-foreground mb-2 text-right">
                 {freeGenLeft > 0
-                  ? `Free Generations left today: ${freeGenLeft} / 2 (5 cards each)`
+                  ? (
+                    <>
+                      {`Free AI flashcard generations left: `}
+                      <span className="font-medium text-primary">{freeGenLeft} / 2 sessions</span>
+                      <span className="ml-1 text-[11px] text-muted-foreground">(5 cards/session, up to 10/day)</span>
+                    </>
+                  )
                   : <span className="text-red-500">Free limit reached for today. Upgrade for unlimited AI flashcards.</span>
                 }
               </div>
             )}
-            
-            {/* Legacy Generation */}
+
+            {/* Basic/legacy generation stays the same */}
             <Button 
               onClick={generateFlashcards}
               disabled={isProcessing}
