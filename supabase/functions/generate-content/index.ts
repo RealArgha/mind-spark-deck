@@ -2,7 +2,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+// Use OpenRouter API key (set as a Supabase secret)
+const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,11 +18,13 @@ serve(async (req) => {
   try {
     const { content, type, count = 10 } = await req.json();
 
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
+    if (!openRouterApiKey) {
+      throw new Error('OpenRouter API key not configured');
     }
 
     let systemPrompt = '';
+    let model = 'groq/llama3-70b-8192'; // You can adjust to another supported model if desired
+
     if (type === 'flashcards') {
       systemPrompt = `You are an expert educator. Create ${count} high-quality flashcards from the provided content. Return a JSON array where each object has:
       - "front": A clear, concise question or prompt
@@ -39,14 +42,16 @@ serve(async (req) => {
       Make questions challenging but fair, covering different aspects of the content.`;
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${openRouterApiKey}`,
         'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://drweqtunimvjossagnlc.supabase.co', // Optionally add your project domain
+        'X-Title': 'AI Study Helper - Flashcards/Quiz'
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Content to process:\n\n${content}` }
@@ -57,7 +62,7 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+      throw new Error(`OpenRouter API error: ${response.status}`);
     }
 
     const data = await response.json();
@@ -66,11 +71,9 @@ serve(async (req) => {
     // Try to parse the JSON response
     let parsedContent;
     try {
-      // Remove any markdown formatting
       const cleanContent = generatedContent.replace(/```json\n?|\n?```/g, '').trim();
       parsedContent = JSON.parse(cleanContent);
     } catch (parseError) {
-      // If JSON parsing fails, return a structured error
       throw new Error('Failed to parse AI response as JSON');
     }
 
