@@ -22,7 +22,8 @@ serve(async (req) => {
     }
 
     let systemPrompt = '';
-    let model = 'google/gemini-2.5-pro-exp-03-25'; // UPDATED MODEL HERE
+    // CHANGE: Use your specified model
+    let model = 'deepseek/deepseek-r1-0528:free';
 
     if (type === 'flashcards') {
       systemPrompt = `You are an expert educator. Create ${count} high-quality flashcards from the provided content. Return a JSON array where each object has:
