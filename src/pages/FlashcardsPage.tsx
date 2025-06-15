@@ -104,6 +104,26 @@ const FlashcardsPage = () => {
     }
   }, [selectedSetId]);
 
+  // Set selectedSetId and enter edit (card list) mode
+  const handleEditSet = (setId: string) => {
+    setSelectedSetId(setId);
+    setInStudyMode(false);
+    setIsCompleted(false);
+    // When entering edit mode, load the cards
+    const selectedSet = flashcardSets.find(set => set.id === setId);
+    if (selectedSet) setCards(selectedSet.cards);
+  };
+
+  // Set selectedSetId and enter study mode
+  const handleStudySet = (setId: string) => {
+    setSelectedSetId(setId);
+    setInStudyMode(true);
+    setIsCompleted(false);
+    // When entering study mode, load the cards
+    const selectedSet = flashcardSets.find(set => set.id === setId);
+    if (selectedSet) setCards(selectedSet.cards);
+  };
+
   const handleSetSelect = (setId: string) => {
     const selectedSet = flashcardSets.find(set => set.id === setId);
     if (selectedSet) {
@@ -269,7 +289,7 @@ const FlashcardsPage = () => {
     );
   }
 
-  // Show set selection
+  // --- SETS SELECTION PAGE ---
   if (!selectedSetId) {
     return (
       <div className="h-screen bg-gradient-to-br from-background to-purple-50/20 flex flex-col">
@@ -314,9 +334,8 @@ const FlashcardsPage = () => {
             <div className="space-y-3">
               {flashcardSets.map((set) => (
                 <Card 
-                  key={set.id} 
-                  className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-primary/20 hover:border-l-primary relative" 
-                  onClick={() => handleSetSelect(set.id)}
+                  key={set.id}
+                  className="hover:shadow-md transition-shadow border-l-4 border-l-primary/20 hover:border-l-primary relative"
                 >
                   <CardContent className="p-4 flex flex-col">
                     <div className="flex items-start justify-between">
@@ -340,18 +359,25 @@ const FlashcardsPage = () => {
                         </div>
                       </div>
                       <div className="ml-4 flex flex-col items-center gap-2">
-                        <Button size="sm" variant="ghost" className="text-primary">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-primary"
+                          type="button"
+                          onClick={() => handleStudySet(set.id)}
+                        >
                           Study →
                         </Button>
                         <Button
-                          size="icon"
+                          size="sm"
                           variant="outline"
                           type="button"
-                          onClick={e => { e.stopPropagation(); openRenameDialog(set.id, set.name); }}
-                          title="Rename this set"
-                          className="text-muted-foreground"
+                          onClick={() => handleEditSet(set.id)}
+                          title="Edit this set"
+                          className="flex items-center gap-1"
                         >
-                          ✏️
+                          <Edit className="h-4 w-4" />
+                          Edit
                         </Button>
                       </div>
                     </div>
@@ -362,25 +388,7 @@ const FlashcardsPage = () => {
           )}
 
           {/* ------- Rename Dialog ------- */}
-          <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Rename Set</DialogTitle>
-              </DialogHeader>
-              <Input 
-                value={renameValue} 
-                onChange={e => setRenameValue(e.target.value)} 
-                placeholder="Enter new set name"
-                className="mb-4"
-                onKeyDown={e => { if (e.key === "Enter") handleRenameConfirm(); }}
-                autoFocus
-              />
-              <DialogFooter>
-                <Button onClick={handleRenameConfirm}>Save</Button>
-                <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>Cancel</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          {/* Dialog will be triggered from Edit (card list) mode now, not here */}
         </div>
       </div>
     );
@@ -408,17 +416,7 @@ const FlashcardsPage = () => {
                   'Unknown Set'
                 }
               </h2>
-
-              {/* Study Button: triggers study mode */}
-              <Button
-                size="sm"
-                className="bg-gradient-to-r from-primary to-purple-600 ml-2"
-                onClick={() => setInStudyMode(true)}
-                type="button"
-              >
-                Study →
-              </Button>
-
+              {/* <Button ...study button removed here since it's now on list page only */} 
               <Button
                 size="sm"
                 variant="ghost"
@@ -428,6 +426,19 @@ const FlashcardsPage = () => {
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Add Card
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => openRenameDialog(
+                  selectedSetId,
+                  flashcardSets.find(s => s.id === selectedSetId)?.name || ""
+                )}
+                title="Rename Set"
+                className="ml-2"
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Rename
               </Button>
             </div>
 
@@ -535,6 +546,26 @@ const FlashcardsPage = () => {
                 <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
                   Cancel
                 </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          {/* ------- Rename Dialog ------- */}
+          <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Rename Set</DialogTitle>
+              </DialogHeader>
+              <Input 
+                value={renameValue} 
+                onChange={e => setRenameValue(e.target.value)} 
+                placeholder="Enter new set name"
+                className="mb-4"
+                onKeyDown={e => { if (e.key === "Enter") handleRenameConfirm(); }}
+                autoFocus
+              />
+              <DialogFooter>
+                <Button onClick={handleRenameConfirm}>Save</Button>
+                <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>Cancel</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
