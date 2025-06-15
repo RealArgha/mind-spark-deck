@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -23,7 +22,7 @@ serve(async (req) => {
     }
 
     let systemPrompt = '';
-    let model = 'groq/llama3-70b-8192'; // You can adjust to another supported model if desired
+    let model = 'google/gemini-2.5-pro-exp-03-25'; // UPDATED MODEL HERE
 
     if (type === 'flashcards') {
       systemPrompt = `You are an expert educator. Create ${count} high-quality flashcards from the provided content. Return a JSON array where each object has:
