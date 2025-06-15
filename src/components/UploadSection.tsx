@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useSubscription } from '@/hooks/useSubscription';
 
 const UploadSection = () => {
   const [text, setText] = useState('');
@@ -15,6 +16,30 @@ const UploadSection = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { subscribed, trial_active } = useSubscription();
+
+  // --- Free user AI generation count tracking ---
+  // Tracks how many times user generated AI flashcards today (localStorage, resets daily)
+  const [freeGenLeft, setFreeGenLeft] = useState(2);
+
+  useEffect(() => {
+    if (subscribed || trial_active) {
+      setFreeGenLeft(Infinity);
+      return;
+    }
+    // Key is updated daily to reset count
+    const todayKey = `aiGenUsed_${new Date().toISOString().slice(0,10)}`;
+    const used = parseInt(localStorage.getItem(todayKey) || "0", 10);
+    setFreeGenLeft(Math.max(0, 2 - used));
+  }, [subscribed, trial_active]);
+
+  // Helper for updating count
+  const recordFreeGen = () => {
+    const todayKey = `aiGenUsed_${new Date().toISOString().slice(0,10)}`;
+    const used = parseInt(localStorage.getItem(todayKey) || "0", 10) + 1;
+    localStorage.setItem(todayKey, used.toString());
+    setFreeGenLeft(Math.max(0, 2 - used));
+  };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -53,14 +78,17 @@ const UploadSection = () => {
 
   const generateWithAI = async (type: 'flashcards' | 'quiz') => {
     const hasContent = text.trim() || uploadedFile;
-    
-    if (!hasContent) {
-      toast({
-        title: "No content to process",
-        description: "Please enter some text, upload a file, or record audio first.",
-        variant: "destructive",
-      });
-      return;
+
+    // --- Free user: enforce generation limits only for AI Flashcards ---
+    if (!subscribed && !trial_active && type === "flashcards") {
+      if (freeGenLeft <= 0) {
+        toast({
+          title: "Limit reached",
+          description: "You have reached the free AI generation limit for today. Upgrade your plan for unlimited AI flashcards.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setIsProcessing(true);
@@ -82,11 +110,17 @@ const UploadSection = () => {
           "Osmosis is the movement of water across a semipermeable membrane from low to high solute concentration.";
       }
 
+      // --- Set correct count for flashcards/quiz ---
+      let count = 10;
+      if (type === "flashcards") {
+        count = (subscribed || trial_active) ? 12 : 5;
+      }
+
       const { data, error } = await supabase.functions.invoke('generate-content', {
         body: {
           content: contentToProcess,
           type: type,
-          count: type === 'flashcards' ? 12 : 10
+          count: count
         }
       });
 
@@ -132,6 +166,10 @@ const UploadSection = () => {
           title: "AI Flashcards generated!",
           description: `Created ${generatedItems.length} flashcards using AI.`,
         });
+        
+        if (!subscribed && !trial_active) {
+          recordFreeGen();
+        }
         
         navigate('/flashcards');
       } else {
@@ -462,11 +500,11 @@ const UploadSection = () => {
               className="min-h-24 mb-4"
             />
             
-            {/* AI Generation Buttons */}
+            {/* --- AI Generation Buttons with Free Usage Limit --- */}
             <div className="grid grid-cols-2 gap-2 mb-2">
               <Button 
                 onClick={() => generateWithAI('flashcards')}
-                disabled={isProcessing}
+                disabled={isProcessing || (!subscribed && !trial_active && freeGenLeft <= 0)}
                 className="bg-gradient-to-r from-purple-600 to-pink-600"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
@@ -482,6 +520,16 @@ const UploadSection = () => {
                 {isProcessing ? "Generating..." : "AI Quiz"}
               </Button>
             </div>
+            
+            {/* Free user limit info */}
+            {(!subscribed && !trial_active) && (
+              <div className="text-xs text-muted-foreground mb-2 text-right">
+                {freeGenLeft > 0
+                  ? `Free Generations left today: ${freeGenLeft} / 2 (5 cards each)`
+                  : <span className="text-red-500">Free limit reached for today. Upgrade for unlimited AI flashcards.</span>
+                }
+              </div>
+            )}
             
             {/* Legacy Generation */}
             <Button 
