@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,34 +7,38 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CreditCard, RefreshCw, Star } from 'lucide-react';
+import { useState } from 'react';
 
 const SubscriptionPage = () => {
   const { subscribed, subscription_tier, subscription_end, loading, refetch } = useSubscription();
   const { toast } = useToast();
+  const [loadingPlan, setLoadingPlan] = useState<null | 'monthly' | 'lifetime'>(null);
 
-  const handleManageSubscription = async () => {
+  const handleCheckout = async (planType: 'monthly' | 'lifetime') => {
+    setLoadingPlan(planType);
     try {
-      const { data, error } = await supabase.functions.invoke('customer-portal');
-      
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { planType }
+      });
+
       if (error) throw error;
-      
       if (data?.url) {
         window.open(data.url, '_blank');
       }
     } catch (error) {
-      console.error('Portal error:', error);
       toast({
-        title: "Error",
-        description: "Failed to open customer portal",
+        title: "Payment Error",
+        description: "Could not open checkout. Try again.",
         variant: "destructive",
       });
+    } finally {
+      setLoadingPlan(null);
     }
   };
 
   return (
     <div className="h-full bg-gradient-to-br from-slate-50 to-indigo-50 flex flex-col">
       <MobileHeader title="Choose Your Plan" />
-      
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {/* Current Status */}
         {subscribed && (
@@ -81,16 +84,45 @@ const SubscriptionPage = () => {
           </Card>
         )}
 
-        {/* Plan Selection */}
+        {/* Plan Selection with Checkout buttons */}
         <div className="space-y-4">
           <div className="text-center mb-4">
             <h2 className="text-2xl font-bold text-slate-800 mb-2">Unlock Premium Features</h2>
             <p className="text-slate-600">Choose the plan that works best for you</p>
           </div>
-          
           <div className="grid gap-4">
-            <SubscriptionCard planType="lifetime" currentTier={subscription_tier} />
-            <SubscriptionCard planType="monthly" currentTier={subscription_tier} />
+            {/* Lifetime Card with Checkout */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Lifetime Access</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-2">
+                <span className="text-xl font-semibold text-purple-600">$25 (one-time)</span>
+                <Button
+                  className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium py-3 mt-2"
+                  onClick={() => handleCheckout('lifetime')}
+                  disabled={loadingPlan === 'lifetime'}
+                >
+                  {loadingPlan === 'lifetime' ? 'Processing...' : 'Checkout Lifetime'}
+                </Button>
+              </CardContent>
+            </Card>
+            {/* Monthly Card with Checkout */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Monthly Plan</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-2">
+                <span className="text-xl font-semibold text-blue-600">$4.99 / month</span>
+                <Button
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium py-3 mt-2"
+                  onClick={() => handleCheckout('monthly')}
+                  disabled={loadingPlan === 'monthly'}
+                >
+                  {loadingPlan === 'monthly' ? 'Processing...' : 'Checkout Monthly'}
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
 

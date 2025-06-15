@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import FlashcardViewer from '@/components/FlashcardViewer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy, Plus, FileText, Brain, Calendar } from 'lucide-react';
+import { Trophy, Plus, FileText, Brain, Calendar, Check, Trash } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MobileHeader from '@/components/MobileHeader';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -17,6 +17,9 @@ const FlashcardsPage = () => {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renamingSetId, setRenamingSetId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [newFront, setNewFront] = useState('');
+  const [newBack, setNewBack] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -129,6 +132,52 @@ const FlashcardsPage = () => {
     setRenamingSetId(null);
     setRenameValue('');
     toast({ title: "Set renamed!" });
+  };
+
+  const handleAddCard = () => {
+    if (!newFront.trim() || !newBack.trim() || !selectedSetId) {
+      toast({ title: "Both front and back must be filled.", variant: "destructive" });
+      return;
+    }
+    const updatedSets = flashcardSets.map(set =>
+      set.id === selectedSetId
+        ? {
+            ...set,
+            cards: [
+              ...set.cards,
+              {
+                id: `card-${Date.now()}`,
+                front: newFront.trim(),
+                back: newBack.trim(),
+                difficulty: 'medium'
+              }
+            ]
+          }
+        : set
+    );
+    setFlashcardSets(updatedSets);
+    localStorage.setItem('flashcardSets', JSON.stringify(updatedSets));
+    setAddDialogOpen(false);
+    setNewFront('');
+    setNewBack('');
+    toast({ title: "Flashcard added!" });
+    // reload cards if in the set
+    const newSet = updatedSets.find(set => set.id === selectedSetId);
+    if (newSet) setCards(newSet.cards);
+  };
+
+  const handleDeleteCard = (cardId: string) => {
+    if (!selectedSetId) return;
+    const updatedSets = flashcardSets.map(set => {
+      if (set.id !== selectedSetId) return set;
+      return { ...set, cards: set.cards.filter(card => card.id !== cardId) };
+    });
+    setFlashcardSets(updatedSets);
+    localStorage.setItem('flashcardSets', JSON.stringify(updatedSets));
+    toast({ title: "Flashcard deleted." });
+    // reload cards if in the set
+    const newSet = updatedSets.find(set => set.id === selectedSetId);
+    if (newSet) setCards(newSet.cards);
   };
 
   if (isCompleted) {
@@ -292,14 +341,106 @@ const FlashcardsPage = () => {
     );
   }
 
+  // --- Show set flashcards view with Add/Delete options ---
   return (
     <div className="h-screen bg-gradient-to-br from-background to-purple-50/20 flex flex-col overflow-hidden">
       <MobileHeader title="Your Flashcards" showBack />
       <div className="flex-1 overflow-hidden">
-        <FlashcardViewer 
-          cards={cards}
-          onComplete={() => setIsCompleted(true)}
-        />
+        <div className="p-4 flex flex-col h-full">
+          <div className="flex items-center mb-4">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleBackToSelection}
+              className="mr-3"
+            >
+              ← Sets
+            </Button>
+            <h2 className="font-bold text-lg flex-1">
+              {
+                flashcardSets.find(s => s.id === selectedSetId)?.name ||
+                'Unknown Set'
+              }
+            </h2>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setAddDialogOpen(true)}
+              title="Add Flashcard"
+              className="ml-2"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Card
+            </Button>
+          </div>
+
+          {/* Cards Table / List */}
+          <div className="flex-1 overflow-y-auto">
+            {cards.length === 0 ? (
+              <div className="text-center text-muted-foreground py-10">
+                No flashcards found in this set.
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {cards.map(card => (
+                  <Card key={card.id} className="relative group flex flex-col sm:flex-row">
+                    <CardContent className="flex-1 flex flex-col sm:flex-row justify-between w-full p-4 gap-3">
+                      <div className="mb-2 sm:mb-0 flex-1">
+                        <div className="text-sm font-semibold text-slate-900 mb-1">Front:</div>
+                        <div className="break-words text-base">{card.front}</div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold text-slate-900 mb-1">Back:</div>
+                        <div className="break-words text-base">{card.back}</div>
+                      </div>
+                      <div className="flex flex-col items-center justify-center ml-2 gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Delete this card"
+                          onClick={() => handleDeleteCard(card.id)}
+                          className="text-destructive"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        {/* ADD CARD DIALOG */}
+        <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Flashcard</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Input
+                placeholder="Front (Question)"
+                value={newFront}
+                onChange={(e) => setNewFront(e.target.value)}
+                autoFocus
+              />
+              <Input
+                className="mt-2"
+                placeholder="Back (Answer)"
+                value={newBack}
+                onChange={(e) => setNewBack(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button onClick={handleAddCard}>
+                Add
+              </Button>
+              <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
+                Cancel
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
