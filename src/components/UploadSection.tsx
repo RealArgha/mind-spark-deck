@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, FileText, Mic, MicOff, Plus } from 'lucide-react';
+import { Upload, FileText, Mic, MicOff, Plus, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 const UploadSection = () => {
   const [text, setText] = useState('');
@@ -47,6 +48,132 @@ const UploadSection = () => {
         description: "Processing your voice notes...",
       });
       setText(prev => prev + "\n[Voice recording processed]");
+    }
+  };
+
+  const generateWithAI = async (type: 'flashcards' | 'quiz') => {
+    const hasContent = text.trim() || uploadedFile;
+    
+    if (!hasContent) {
+      toast({
+        title: "No content to process",
+        description: "Please enter some text, upload a file, or record audio first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    
+    try {
+      let contentToProcess = text;
+      
+      if (uploadedFile) {
+        // For demo purposes, using sample content when PDF is uploaded
+        contentToProcess += `\n\nContent from ${uploadedFile.name}:\n` +
+          "Photosynthesis is the biological process by which plants convert light energy into chemical energy. " +
+          "This process occurs in the chloroplasts of plant cells, specifically in structures called thylakoids. " +
+          "The main equation for photosynthesis is: 6CO2 + 6H2O + light energy → C6H12O6 + 6O2. " +
+          "Chlorophyll is the green pigment that captures light energy during photosynthesis. " +
+          "Cellular respiration is the opposite process where glucose is broken down to release ATP energy. " +
+          "Mitochondria are organelles that produce ATP through cellular respiration. " +
+          "DNA replication occurs during the S phase of the cell cycle. " +
+          "Enzymes are proteins that catalyze biochemical reactions by lowering activation energy. " +
+          "Osmosis is the movement of water across a semipermeable membrane from low to high solute concentration.";
+      }
+
+      const { data, error } = await supabase.functions.invoke('generate-content', {
+        body: {
+          content: contentToProcess,
+          type: type,
+          count: type === 'flashcards' ? 12 : 10
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'AI generation failed');
+      }
+
+      const generatedItems = data.data;
+      
+      if (!generatedItems || generatedItems.length === 0) {
+        toast({
+          title: "Generation failed",
+          description: "AI couldn't generate content from the provided material.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (type === 'flashcards') {
+        // Save flashcard set
+        const newSet = {
+          id: `ai-set-${Date.now()}`,
+          name: uploadedFile ? `AI: ${uploadedFile.name}` : 'AI Generated Cards',
+          cards: generatedItems.map((item: any, index: number) => ({
+            id: `ai-card-${index + 1}`,
+            front: item.front,
+            back: item.back,
+            difficulty: item.difficulty || 'medium'
+          })),
+          createdAt: Date.now(),
+          source: uploadedFile ? `AI from PDF: ${uploadedFile.name}` : 'AI from text input'
+        };
+        
+        const existingSets = JSON.parse(localStorage.getItem('flashcardSets') || '[]');
+        const updatedSets = [...existingSets, newSet];
+        localStorage.setItem('flashcardSets', JSON.stringify(updatedSets));
+        
+        toast({
+          title: "AI Flashcards generated!",
+          description: `Created ${generatedItems.length} flashcards using AI.`,
+        });
+        
+        navigate('/flashcards');
+      } else {
+        // Save quiz
+        const newQuiz = {
+          id: `ai-quiz-${Date.now()}`,
+          name: uploadedFile ? `AI Quiz: ${uploadedFile.name}` : 'AI Generated Quiz',
+          questions: generatedItems.map((item: any, index: number) => ({
+            id: `ai-q-${index + 1}`,
+            question: item.question,
+            options: item.options,
+            correctAnswer: item.correctAnswer,
+            explanation: item.explanation
+          })),
+          createdAt: Date.now(),
+          source: uploadedFile ? `AI from PDF: ${uploadedFile.name}` : 'AI from text input'
+        };
+        
+        const existingQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
+        const updatedQuizzes = [...existingQuizzes, newQuiz];
+        localStorage.setItem('customQuizzes', JSON.stringify(updatedQuizzes));
+        
+        toast({
+          title: "AI Quiz generated!",
+          description: `Created ${generatedItems.length} questions using AI.`,
+        });
+        
+        navigate('/quiz');
+      }
+
+      setText('');
+      setUploadedFile(null);
+      
+    } catch (error) {
+      console.error('AI generation error:', error);
+      toast({
+        title: "AI Generation failed",
+        description: error.message || "There was an error generating content with AI. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -190,7 +317,6 @@ const UploadSection = () => {
         return;
       }
       
-      // Save to new flashcard sets format
       const newSet = {
         id: `set-${Date.now()}`,
         name: uploadedFile ? `From ${uploadedFile.name}` : 'Generated from Text',
@@ -199,7 +325,6 @@ const UploadSection = () => {
         source: uploadedFile ? `PDF: ${uploadedFile.name}` : 'Text input'
       };
       
-      // Get existing sets
       const existingSets = JSON.parse(localStorage.getItem('flashcardSets') || '[]');
       const updatedSets = [...existingSets, newSet];
       
@@ -336,12 +461,36 @@ const UploadSection = () => {
               onChange={(e) => setText(e.target.value)}
               className="min-h-24 mb-4"
             />
+            
+            {/* AI Generation Buttons */}
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <Button 
+                onClick={() => generateWithAI('flashcards')}
+                disabled={isProcessing}
+                className="bg-gradient-to-r from-purple-600 to-pink-600"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                {isProcessing ? "Generating..." : "AI Flashcards"}
+              </Button>
+              <Button 
+                onClick={() => generateWithAI('quiz')}
+                disabled={isProcessing}
+                variant="outline"
+                className="border-purple-300 text-purple-700 hover:bg-purple-50"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                {isProcessing ? "Generating..." : "AI Quiz"}
+              </Button>
+            </div>
+            
+            {/* Legacy Generation */}
             <Button 
               onClick={generateFlashcards}
               disabled={isProcessing}
-              className="w-full bg-gradient-to-r from-primary to-purple-600"
+              variant="outline"
+              className="w-full"
             >
-              {isProcessing ? "Generating..." : "Generate Flashcards"}
+              {isProcessing ? "Generating..." : "Basic Generation"}
             </Button>
           </CardContent>
         </Card>
