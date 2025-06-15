@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useDailyGenerationLimit } from "@/hooks/useDailyGenerationLimit";
 
 const UploadSection = () => {
   const [text, setText] = useState('');
@@ -18,26 +19,15 @@ const UploadSection = () => {
   const navigate = useNavigate();
   const { subscribed, trial_active } = useSubscription();
 
-  // --- Free user AI generation count tracking: Limit to 2 times per day, 5 cards per generation ---
-  const [freeGenLeft, setFreeGenLeft] = useState(2);
-
-  useEffect(() => {
-    if (subscribed || trial_active) {
-      setFreeGenLeft(Infinity);
-      return;
-    }
-    const todayKey = `aiGenUsed_${new Date().toISOString().slice(0,10)}`;
-    const used = parseInt(localStorage.getItem(todayKey) || "0", 10);
-    setFreeGenLeft(Math.max(0, 2 - used));
-  }, [subscribed, trial_active]);
-
-  // Helper for updating count
-  const recordFreeGen = () => {
-    const todayKey = `aiGenUsed_${new Date().toISOString().slice(0,10)}`;
-    const used = parseInt(localStorage.getItem(todayKey) || "0", 10) + 1;
-    localStorage.setItem(todayKey, used.toString());
-    setFreeGenLeft(Math.max(0, 2 - used));
-  };
+  // --- Use shared hook for daily generation limit ---
+  const {
+    canGenerate,
+    remaining,
+    recordGeneration,
+    maxPerDay,
+    maxPerSession,
+    unlimited,
+  } = useDailyGenerationLimit();
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -74,15 +64,15 @@ const UploadSection = () => {
     }
   };
 
-  const generateWithAI = async (type: 'flashcards' | 'quiz') => {
+  const generateWithAI = async (type: "flashcards" | "quiz") => {
     const hasContent = text.trim() || uploadedFile;
 
-    // Enforce free user's daily session/card limits
-    if (!subscribed && !trial_active && type === "flashcards") {
-      if (freeGenLeft <= 0) {
+    // --- Enforce free user's daily session/card limits via hook ---
+    if (!unlimited) {
+      if (!canGenerate(type)) {
         toast({
-          title: "Free AI generation limit reached",
-          description: "You've reached the maximum of 2 AI flashcard generations (10 cards) for today. Upgrade to unlock unlimited AI cards.",
+          title: `Free AI ${type === "quiz" ? "quiz" : "flashcard"} generation limit reached`,
+          description: `You've reached the maximum of ${maxPerDay} AI ${type === "quiz" ? "quiz" : "flashcard"} generations (${maxPerSession * maxPerDay} items) for today. Upgrade to unlock unlimited AI generations.`,
           variant: "destructive",
         });
         return;
@@ -102,7 +92,6 @@ const UploadSection = () => {
 
     try {
       let contentToProcess = text;
-
       if (uploadedFile) {
         contentToProcess += `\n\nContent from ${uploadedFile.name}:\n` +
           "Photosynthesis is the biological process by which plants convert light energy into chemical energy. " +
@@ -116,11 +105,9 @@ const UploadSection = () => {
           "Osmosis is the movement of water across a semipermeable membrane from low to high solute concentration.";
       }
 
-      // --- Set card count: flashcards = 5 for free users, 12 for paid. Quiz = 10 for all.
-      let count = 10;
-      if (type === "flashcards") {
-        count = (subscribed || trial_active) ? 12 : 5;
-      }
+      // --- Set card count: always use limit per session ---
+      let count = type === "flashcards" || !unlimited ? maxPerSession : 10;
+      if (type === "flashcards" && unlimited) count = 12;
 
       const { data, error } = await supabase.functions.invoke('generate-content', {
         body: {
@@ -166,11 +153,10 @@ const UploadSection = () => {
           description: `Created ${generatedItems.length} flashcards using AI.`,
         });
 
-        // -- Record free usage
-        if (!subscribed && !trial_active) {
-          recordFreeGen();
+        // --- Record free usage
+        if (!unlimited) {
+          recordGeneration("flashcards");
         }
-
         navigate('/flashcards');
       } else {
         // Save quiz (unlimited for all users)
@@ -197,6 +183,9 @@ const UploadSection = () => {
           description: `Created ${generatedItems.length} questions using AI.`,
         });
 
+        if (!unlimited) {
+          recordGeneration("quiz");
+        }
         navigate('/quiz');
       }
 
@@ -504,7 +493,7 @@ const UploadSection = () => {
             <div className="grid grid-cols-2 gap-2 mb-2">
               <Button 
                 onClick={() => generateWithAI('flashcards')}
-                disabled={isProcessing || (!subscribed && !trial_active && freeGenLeft <= 0)}
+                disabled={isProcessing || (!unlimited && !canGenerate("flashcards"))}
                 className="bg-gradient-to-r from-purple-600 to-pink-600"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
@@ -512,7 +501,7 @@ const UploadSection = () => {
               </Button>
               <Button 
                 onClick={() => generateWithAI('quiz')}
-                disabled={isProcessing}
+                disabled={isProcessing || (!unlimited && !canGenerate("quiz"))}
                 variant="outline"
                 className="border-purple-300 text-purple-700 hover:bg-purple-50"
               >
@@ -522,18 +511,18 @@ const UploadSection = () => {
             </div>
 
             {/* Free user AI generation session/card limit info */}
-            {(!subscribed && !trial_active) && (
+            {(!unlimited) && (
               <div className="text-xs text-muted-foreground mb-2 text-right">
-                {freeGenLeft > 0
-                  ? (
-                    <>
-                      {`Free AI flashcard generations left: `}
-                      <span className="font-medium text-primary">{freeGenLeft} / 2 sessions</span>
-                      <span className="ml-1 text-[11px] text-muted-foreground">(5 cards/session, up to 10/day)</span>
-                    </>
-                  )
-                  : <span className="text-red-500">Free limit reached for today. Upgrade for unlimited AI flashcards.</span>
-                }
+                <div>
+                  {`Flashcards generations left: `}
+                  <span className="font-medium text-primary">{remaining("flashcards")} / {maxPerDay} sessions</span>
+                  <span className="ml-1 text-[11px]">(5 cards/session, up to 10/day)</span>
+                </div>
+                <div>
+                  {`Quiz generations left: `}
+                  <span className="font-medium text-primary">{remaining("quiz")} / {maxPerDay} sessions</span>
+                  <span className="ml-1 text-[11px]">(5 questions/session, up to 10/day)</span>
+                </div>
               </div>
             )}
 
