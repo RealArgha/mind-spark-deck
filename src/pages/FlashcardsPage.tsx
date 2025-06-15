@@ -359,24 +359,26 @@ const FlashcardsPage = () => {
                         </div>
                       </div>
                       <div className="ml-4 flex flex-col items-center gap-2">
+                        {/* Beautiful Study Button */}
                         <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-primary"
+                          size="lg"
+                          className="w-32 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-semibold rounded-full shadow-xl hover:scale-105 transition-transform duration-200 group"
                           type="button"
                           onClick={() => handleStudySet(set.id)}
                         >
-                          Study →
+                          <Brain className="h-5 w-5 mr-2 transition-transform duration-200 group-hover:scale-125" />
+                          Study
                         </Button>
+                        {/* Beautiful Edit Button */}
                         <Button
-                          size="sm"
+                          size="lg"
                           variant="outline"
                           type="button"
                           onClick={() => handleEditSet(set.id)}
                           title="Edit this set"
-                          className="flex items-center gap-1"
+                          className="w-32 border-2 border-primary/40 shadow hover:bg-muted flex items-center gap-2 font-semibold rounded-full group"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-5 w-5 mr-2 text-primary group-hover:scale-125 transition-transform duration-200" />
                           Edit
                         </Button>
                       </div>
