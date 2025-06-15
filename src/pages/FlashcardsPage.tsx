@@ -20,6 +20,7 @@ const FlashcardsPage = () => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [newFront, setNewFront] = useState('');
   const [newBack, setNewBack] = useState('');
+  const [inStudyMode, setInStudyMode] = useState(false);
   const { toast } = useToast();
 
   // Edit Card Dialog State
@@ -386,7 +387,7 @@ const FlashcardsPage = () => {
   }
 
   // --- Show set flashcards view with Add/Delete/Edit options ---
-  if (selectedSetId && !isCompleted) {
+  if (selectedSetId && !isCompleted && !inStudyMode) {
     return (
       <div className="h-screen bg-gradient-to-br from-background to-purple-50/20 flex flex-col overflow-hidden">
         <MobileHeader title="Your Flashcards" showBack />
@@ -407,6 +408,17 @@ const FlashcardsPage = () => {
                   'Unknown Set'
                 }
               </h2>
+
+              {/* Study Button: triggers study mode */}
+              <Button
+                size="sm"
+                className="bg-gradient-to-r from-primary to-purple-600 ml-2"
+                onClick={() => setInStudyMode(true)}
+                type="button"
+              >
+                Study →
+              </Button>
+
               <Button
                 size="sm"
                 variant="ghost"
@@ -532,11 +544,15 @@ const FlashcardsPage = () => {
   }
 
   // --- FlashcardViewer (Study Mode) ---
-  if (selectedSetId && cards.length > 0 && !isCompleted) {
+  if (selectedSetId && inStudyMode && cards.length > 0 && !isCompleted) {
     return (
       <FlashcardViewer
         cards={cards}
-        onComplete={() => setIsCompleted(true)}
+        // Reset to list view when done or if needed
+        onComplete={() => {
+          setIsCompleted(true);
+          setInStudyMode(false); // End study mode on completion
+        }}
       />
     );
   }
