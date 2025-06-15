@@ -14,6 +14,22 @@ const SubscriptionPage = () => {
   const { toast } = useToast();
   const [loadingPlan, setLoadingPlan] = useState<null | 'monthly' | 'lifetime'>(null);
 
+  const handleManageSubscription = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      toast({
+        title: "Portal Error",
+        description: "Could not open Stripe Customer Portal. Try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleCheckout = async (planType: 'monthly' | 'lifetime') => {
     setLoadingPlan(planType);
     try {
