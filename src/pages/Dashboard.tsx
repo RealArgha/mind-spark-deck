@@ -22,7 +22,7 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
       <MobileHeader showLogo />
       
-      <div className="px-4 py-6 space-y-6">
+      <div className="px-4 py-6 space-y-6 pb-24">
         {/* Welcome Card */}
         <Card className="border-0 shadow-sm bg-white/90 backdrop-blur-sm">
           <CardContent className="p-6">
