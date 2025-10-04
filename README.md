@@ -1,6 +1,7 @@
 # Welcome to My project
 
 ## Project info
+Project Link: https://neuro-deck.lovable.app/
 
 **Use your preferred IDE**
 
